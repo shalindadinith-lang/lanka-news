@@ -6,69 +6,19 @@
   <title>Sri Lanka Live News</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Noto Sans Sinhala', sans-serif;
-      margin: 0;
-      background: #f4f4f4;
-      color: #222;
-    }
-    body.dark {
-      background: #121212;
-      color: #f4f4f4;
-    }
-    header {
-      background: #b30000;
-      color: #fff;
-      padding: 15px;
-      text-align: center;
-    }
-    .dark-btn {
-      margin: 10px;
-      padding: 6px 14px;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-      font-weight: bold;
-    }
-    main {
-      padding: 15px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .news-item {
-      background: #fff;
-      padding: 12px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-    }
-    body.dark .news-item {
-      background: #1e1e1e;
-    }
-    .news-item h3 {
-      margin: 0 0 8px 0;
-      font-size: 18px;
-      line-height: 1.4;
-    }
-    .news-item p {
-      margin: 0;
-      font-size: 15px;
-      color: #555;
-    }
-    body.dark .news-item p {
-      color: #bbb;
-    }
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    #news-container:empty::before {
-      content: "පුවත් ලෝඩ් වෙමින්...";
-      color: #777;
-    }
+    body { font-family: 'Noto Sans Sinhala', sans-serif; margin: 0; background: #f4f4f4; color: #222; }
+    body.dark { background: #121212; color: #f4f4f4; }
+    header { background: #b30000; color: #fff; padding: 15px; text-align: center; }
+    .dark-btn { margin: 10px; padding: 6px 14px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
+    main { padding: 15px; max-width: 900px; margin: 0 auto; }
+    .news-item { background: #fff; padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 1px 5px rgba(0,0,0,0.1); }
+    body.dark .news-item { background: #1e1e1e; }
+    .news-item h3 { margin: 0 0 8px 0; font-size: 18px; line-height: 1.4; }
+    .news-item p { margin: 0; font-size: 15px; color: #555; }
+    body.dark .news-item p { color: #bbb; }
+    a { color: inherit; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    #news-container:empty::before { content: "පුවත් ලෝඩ් වෙමින්..."; color: #777; display: block; text-align: center; padding: 20px; }
   </style>
 </head>
 <body>
@@ -83,74 +33,63 @@
 </main>
 
 <script>
-// API Key (rss2json සඳහා)
 const API_KEY = 'da0c1f36bb1fa76794c1046b6d31b6a3';
 
-// RSS feeds list
 const RSS_FEEDS = [
   'https://www.lankadeepa.lk/rss',
   'https://sinhala.adaderana.lk/rss'
-  // අවශ්‍ය නම් මෙතනට තවත් RSS links එකතු කරන්න
 ];
 
-// Dark Mode Toggle
 function toggleDarkMode() {
   document.body.classList.toggle('dark');
   localStorage.setItem('darkMode', document.body.classList.contains('dark') ? 'enabled' : 'disabled');
 }
 
-// Load news from RSS feeds
 async function loadSinhalaNews() {
   const container = document.getElementById('news-container');
-  container.innerHTML = ''; // Clear loading text
+  container.innerHTML = '';
 
   for (const rssUrl of RSS_FEEDS) {
     const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&api_key=${API_KEY}`;
 
     try {
       const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        console.log(`HTTP error for ${rssUrl}: ${response.status}`);
+        continue;
+      }
 
       const data = await response.json();
 
-      if (data.status === 'ok' && data.items && data.items.length > 0) {
+      if (data.status === 'ok' && data.items?.length > 0) {
         data.items.forEach(item => {
           const div = document.createElement('div');
           div.className = 'news-item';
-
           const title = item.title || 'මාතෘකාවක් නැත';
           const link = item.link || '#';
-          const desc = item.description || item.content || 'විස්තරයක් නැත';
+          const desc = (item.description || item.content || '').substring(0, 300) + '...';
 
           div.innerHTML = `
             <h3><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></h3>
             <p>${desc}</p>
           `;
-
           container.appendChild(div);
         });
       }
     } catch (err) {
-      console.error("RSS feed එක ලෝඩ් කරද්දි ගැටලුවක්:", rssUrl, err);
-      // Optional: userට පෙන්වන්න error message එකක්
-      // container.innerHTML += `<p style="color:red;">${rssUrl} ලෝඩ් වෙන්නේ නැහැ...</p>`;
+      console.error("Error loading", rssUrl, err);
     }
   }
 
-  // එක feed එකකින්වත් එක item එකක්වත් නැත්නම්
   if (container.children.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#777;">මේ වෙලාවේ පුවත් ලබාගන්න බැරි වුණා. පසුව උත්සාහ කරන්න.</p>';
+    container.innerHTML = '<p style="text-align:center; color:#777;">පුවත් ලබාගැනීමට ගැටලුවක් ඇති වුණා. පසුව උත්සාහ කරන්න.</p>';
   }
 }
 
-// Page load කරනකොට run වෙන දේවල්
 document.addEventListener('DOMContentLoaded', () => {
-  // Dark mode පෙර තිබුණු එක restore කරනවා
   if (localStorage.getItem('darkMode') === 'enabled') {
     document.body.classList.add('dark');
   }
-
-  // News load කරනවා
   loadSinhalaNews();
 });
 </script>
