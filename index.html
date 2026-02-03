@@ -89,7 +89,8 @@ feeds.forEach(feedUrl => {
   fetch(feedUrl)
     .then(res => res.json())
     .then(data => {
-      const items = data.items; // rss2json returns items array
+      const container = document.getElementById('news-container');
+      const items = data.items;
       items.forEach(el => {
         const title = el.title;
         const link = el.link;
@@ -100,9 +101,7 @@ feeds.forEach(feedUrl => {
         container.appendChild(div);
       });
     })
-    .catch(err => {
-      console.error("Failed to load RSS feed:", err);
-    });
+    .catch(err => console.error("Failed to load RSS feed:", err));
 });
 
 
@@ -119,5 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
