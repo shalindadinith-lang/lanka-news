@@ -82,7 +82,10 @@ function loadSinhalaNews() {
   // RSS Feeds
   const feeds = [
     'https://api.allorigins.win/raw?url=https://www.lankadeepa.lk/rss',
-    'https://api.allorigins.win/raw?url=https://sinhala.adaderana.lk/rss'
+    'https://api.allorigins.win/raw?url=https://sinhala.adaderana.lk/rss',
+    'https://cors-anywhere.herokuapp.com/https://www.lankadeepa.lk/rss'
+    
+    
   ];
 
   container.innerHTML = '';
@@ -126,3 +129,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
