@@ -1,31 +1,117 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ශ්‍රී ලංකා Live Info Hub 🇱🇰</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SL 3D News Channel</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Noto Sans Sinhala', sans-serif;
+}
+
+body{
+  background:linear-gradient(135deg,#1e3c72,#2a5298,#6a11cb);
+  min-height:100vh;
+  color:white;
+  overflow-x:hidden;
+}
+
+header{
+  text-align:center;
+  padding:30px;
+  font-size:28px;
+  font-weight:bold;
+  letter-spacing:2px;
+  text-shadow:0 0 15px rgba(255,255,255,0.6);
+}
+
+.section-title{
+  text-align:center;
+  margin:40px 0 20px;
+  font-size:22px;
+  background:rgba(255,255,255,0.1);
+  display:inline-block;
+  padding:10px 25px;
+  border-radius:30px;
+  backdrop-filter:blur(10px);
+}
+
+.container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:25px;
+  padding:20px 40px;
+}
+
+.news-card{
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(15px);
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  transition:0.5s;
+  transform-style:preserve-3d;
+  animation:fadeIn 1s ease forwards;
+}
+
+.news-card:hover{
+  transform:rotateY(10deg) rotateX(5deg) scale(1.05);
+  box-shadow:0 20px 40px rgba(0,0,0,0.5);
+}
+
+.news-card a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:16px;
+}
+
+.news-card p{
+  font-size:13px;
+  margin-top:8px;
+  opacity:0.8;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(30px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+footer{
+  text-align:center;
+  padding:30px;
+  opacity:0.7;
+}
+</style>
 </head>
 <body>
-  <header>
-    <h1>ශ්‍රී ලංකා Live Info Hub</h1>
-    <nav>
-      <a href="index.html">මුල් පිටුව</a>
-      <a href="news.html">පුවත්</a>
-      <a href="tv.html">Live TV</a>
-      <a href="weather.html">කාලගුණය</a>
-      <a href="fuel.html">ඉන්ධන මිල</a>
-      <a href="powercut.html">විදුලි බිඳවැටීම්</a>
-      <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
-    </nav>
-  </header>
-  <main>
-    <h2>සාදරයෙන් පිළිගන්නවා! 🇱🇰</h2>
-    <p>මෙහි ඔබට ලංකාවේ තත්ත්වයන් ගැන real-time තොරතුරු ලැබෙනවා: පුවත්, Live TV, කාලගුණය, ඉන්ධන මිල, විදුලි කප්පාදු, සහ currency rates.</p>
-    <section id="currency-container">Currency rates ලෝඩ් වෙමින්...</section>
-    <p>ඔයාගේ suggestions තියෙනවනම් කියන්න – upgrade කරමු!</p>
-  </main>
-  <script src="assets/js/app.js"></script>
+
+<header>🇱🇰 Sri Lanka 3D News Portal</header>
+
+<center><div class="section-title">English News</div></center>
+
+<div class="container">
+<script src="//rss.bloople.net/?url=https%3A%2F%2Flankanewsweb.net%2Ffeed&showtitle=false&type=js"></script>
+<script src="//rss.bloople.net/?url=https%3A%2F%2Fwww.slmirror.com%2Ffeed&showtitle=false&type=js"></script>
+</div>
+
+<center><div class="section-title">සිංහල පුවත්</div></center>
+
+<div class="container">
+<script src="//rss.bloople.net/?url=https%3A%2F%2Freadme.lk%2Ffeed&showtitle=false&type=js"></script>
+<script src="//rss.bloople.net/?url=https%3A%2F%2Ftecroom.lk%2Ffeed&showtitle=false&type=js"></script>
+<script src="//rss.bloople.net/?url=https%3A%2F%2Fvikalpa.org%2Ffeed&showtitle=false&type=js"></script>
+</div>
+
+<footer>
+© 2026 SL 3D News Channel | Live RSS Powered
+</footer>
+
 </body>
 </html>
