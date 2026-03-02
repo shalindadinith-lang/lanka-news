@@ -4,875 +4,267 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weatherly • Interactive Map</title>
-    <!-- Tailwind CSS CDN (modern UI සඳහා) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Leaflet Map CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-   
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-       
-        :root {
-            --primary: #3b82f6;
-        }
-       
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-        }
-       
-        .title-font {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-       
-        /* Animated Gradient Background */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+        
+        :root { --primary: #3b82f6; }
+        body { font-family: 'Inter', system-ui, sans-serif; height: 100vh; overflow: hidden; }
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+        
         #bg {
             background: linear-gradient(135deg, #0f172a, #1e2937, #334155, #1e40af);
             background-size: 400% 400%;
-            animation: gradientShift 25s ease infinite;
+            animation: gradientShift 20s ease infinite;
         }
-       
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-       
-        /* Glassmorphism Card - Adjusted for better visibility (darker background) */
+
         .glass {
-            background: rgba(0, 0, 0, 0.5); /* Changed to darker for contrast with white text */
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-       
-        /* Map Styling */
-        #map {
-            filter: contrast(1.05) saturate(1.15);
-        }
-       
-        /* Rain Animation */
-        @keyframes fall {
-            to { transform: translateY(120vh); }
-        }
-        .drop {
-            position: absolute;
-            width: 2px;
-            background: linear-gradient(transparent, #93c5fd);
-            box-shadow: 0 0 8px #60a5fa;
-            animation: fall linear infinite;
-        }
-       
-        /* Snow Animation */
-        @keyframes snowFall {
-            to { transform: translateY(120vh) rotate(360deg); }
-        }
-        .snowflake {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #fff;
-            animation: snowFall linear infinite;
-        }
-       
-        /* Lightning Flash */
-        @keyframes lightning {
-            0%, 90% { opacity: 0; }
-            92% { opacity: 0.8; }
-            94% { opacity: 0; }
-            96% { opacity: 0.6; }
-            100% { opacity: 0; }
-        }
-        .lightning-flash {
-            position: absolute;
-            inset: 0;
-            background: white;
-            opacity: 0;
-            animation: lightning 5s infinite;
-            pointer-events: none;
-        }
-       
-        /* Fog Animation */
-        @keyframes fogDrift {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(100vw); }
-        }
-        .fog-layer {
-            position: absolute;
-            width: 200vw;
-            height: 100vh;
-            background: linear-gradient(transparent, rgba(255,255,255,0.3), transparent);
-            filter: blur(50px);
-            animation: fogDrift 60s linear infinite;
-        }
-       
-        /* Cloud Animation */
-        @keyframes drift {
-            from { transform: translateX(-200%); }
-            to { transform: translateX(250vw); }
-        }
-        .cloud {
-            position: absolute;
-            font-size: 140px;
-            opacity: 0.65;
-            filter: blur(2px);
-            animation: drift linear infinite;
-            text-shadow: 0 0 30px rgba(255,255,255,0.6);
-        }
-       
-        /* Stars Animation */
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #fff;
-            animation: twinkle 2s infinite alternate ease-in-out;
-        }
-       
-        /* Sunny Glow */
-        @keyframes sunny-glow {
-            0%, 100% { filter: drop-shadow(0 0 30px #facc15); }
-            50% { filter: drop-shadow(0 0 70px #fde047); }
-        }
-        .sunny-glow {
-            animation: sunny-glow 4s ease-in-out infinite;
-        }
-       
-        /* Fade-in Animation */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .weather-card {
-            animation: fadeInUp 0.8s ease forwards;
-        }
-       
-        /* Smooth hover effects */
-        .glass:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 30px 60px -15px rgb(0 0 0 / 0.5);
-        }
-       
-        /* Forecast Carousel */
-        .forecast-item {
-            min-width: 120px; /* Increased for better text visibility */
-            flex-shrink: 0;
-        }
-        .forecast-desc {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+
+        /* Animations */
+        .drop { position: absolute; width: 2px; background: linear-gradient(transparent, #93c5fd); animation: fall linear infinite; }
+        @keyframes fall { to { transform: translateY(110vh); } }
+        
+        .snowflake { position: absolute; width: 5px; height: 5px; background: white; border-radius: 50%; animation: snowFall linear infinite; }
+        @keyframes snowFall { to { transform: translateY(110vh) rotate(360deg); } }
+
+        .lightning-flash { position: absolute; inset: 0; background: white; opacity: 0; animation: lightning 5s infinite; pointer-events: none; }
+        @keyframes lightning { 0%, 90% { opacity: 0; } 92% { opacity: 0.6; } 94% { opacity: 0; } 96% { opacity: 0.4; } 100% { opacity: 0; } }
+
+        .cloud { position: absolute; opacity: 0.5; animation: drift linear infinite; pointer-events: none; }
+        @keyframes drift { from { left: -150px; } to { left: 100vw; } }
+
+        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 2s infinite alternate; }
+        @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-black text-white overflow-hidden h-screen relative">
-   
-    <!-- Animated Gradient Background -->
+<body class="bg-black text-white relative">
+
     <div id="bg" class="fixed inset-0 z-[-1]"></div>
-   
-    <!-- Full-screen Leaflet Map -->
     <div id="map" class="fixed inset-0 z-0"></div>
-   
-    <!-- Weather Animations Container -->
-    <div id="animations-layer" class="fixed inset-0 z-[5] pointer-events-none"></div>
-   
-    <!-- Rain Container -->
-    <div id="rain-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
-   
-    <!-- Snow Container -->
-    <div id="snow-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
-   
-    <!-- Lightning Container -->
-    <div id="lightning-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
-   
-    <!-- Fog Container -->
-    <div id="fog-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
-   
-    <!-- Clouds Container -->
-    <div id="clouds-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
-   
-    <!-- Stars Container -->
-    <div id="stars-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
-   
-    <!-- Top Header with Search -->
-    <header class="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/10"> <!-- Increased opacity for visibility -->
-        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-            <!-- Logo -->
-            <div class="flex items-center gap-x-3">
-                <i class="fa-solid fa-cloud-sun text-4xl text-sky-400"></i>
-                <div>
-                    <h1 class="title-font text-3xl font-semibold tracking-tighter">Weatherly</h1>
-                    <p class="text-[10px] text-white/50 -mt-1 tracking-[2px]">LIVE MAP</p>
-                </div>
+    
+    <div id="anim-layer" class="fixed inset-0 z-[5] pointer-events-none"></div>
+
+    <header class="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-cloud-bolt text-3xl text-sky-400"></i>
+                <h1 class="title-font text-2xl font-bold tracking-tight hidden sm:block">Weatherly</h1>
             </div>
-           
-            <!-- Search Bar -->
-            <form id="search-form" class="flex-1 max-w-md mx-8">
-                <div class="relative group">
-                    <input id="search-input"
-                           type="text"
-                           placeholder="නගරයක් සොයන්න... (Badulla උදාහරණය)"
-                           class="w-full bg-white/10 border border-white/30 focus:border-sky-400 transition-all rounded-3xl px-6 py-4 pl-14 text-sm placeholder:text-white/60 focus:outline-none">
-                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-white/60 text-lg"></i>
+            
+            <form id="search-form" class="flex-1 max-w-md mx-4">
+                <div class="relative">
+                    <input id="search-input" type="text" placeholder="නගරයක් සොයන්න..." 
+                        class="w-full bg-white/10 border border-white/20 rounded-full px-6 py-3 pl-12 focus:outline-none focus:border-sky-400 transition-all">
+                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-white/40"></i>
                 </div>
             </form>
-           
-            <!-- My Location Button -->
-            <button onclick="getUserLocation()"
-                    class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-all px-6 py-4 rounded-3xl text-sm font-medium">
-                <i class="fa-solid fa-location-dot"></i>
-                <span class="hidden md:block">මගේ ස්ථානය</span>
+
+            <button onclick="getUserLocation()" class="bg-sky-500 hover:bg-sky-600 px-5 py-3 rounded-full text-sm font-bold transition-all flex items-center gap-2">
+                <i class="fa-solid fa-location-crosshairs"></i> <span class="hidden md:block">මගේ ස්ථානය</span>
             </button>
         </div>
     </header>
-   
-    <!-- Glassmorphism Weather Card -->
-    <div id="weather-card"
-         class="glass fixed top-28 left-6 md:left-8 w-full max-w-[380px] rounded-3xl p-8 z-50 weather-card opacity-0 overflow-y-auto max-h-[80vh]">
-       
-        <!-- City & Date -->
-        <div class="flex justify-between items-start mb-8">
+
+    <main id="weather-card" class="glass fixed top-24 left-6 right-6 md:left-8 md:w-[400px] rounded-[2rem] p-8 z-50 opacity-0 translate-y-10 transition-all duration-700 overflow-y-auto max-h-[80vh] scrollbar-hide">
+        <div class="flex justify-between items-start">
             <div>
-                <div id="city-name" class="text-3xl font-semibold title-font tracking-tight">Badulla, LK</div>
-                <div id="current-date" class="text-white/60 text-sm mt-1">Today • March 02, 2026</div>
+                <h2 id="city-name" class="text-3xl font-bold title-font">Loading...</h2>
+                <p id="current-date" class="text-white/50 text-sm">-- --, ----</p>
             </div>
-            <img id="weather-icon"
-                 src="https://openweathermap.org/img/wn/02d@4x.png"
-                 alt="Weather Icon"
-                 class="w-28 h-28 -mt-6 transition-all">
+            <img id="weather-icon" src="" class="w-20 h-20 -mt-2">
         </div>
-       
-        <!-- Temperature -->
-        <div class="flex items-end gap-2 mb-2">
-            <div id="temperature" class="text-8xl font-light tracking-tighter leading-none">27</div>
-            <div class="text-5xl text-white/70 mb-4">°C</div>
+
+        <div class="mt-6 flex items-baseline gap-2">
+            <span id="temperature" class="text-8xl font-light tracking-tighter">--</span>
+            <span class="text-4xl text-sky-400">°C</span>
         </div>
-       
-        <div id="weather-desc" class="text-xl capitalize text-white/80 mb-1">Few Clouds</div>
-        <div id="feels-like" class="text-white/70 text-sm">Feels like 29°C</div>
-       
-        <!-- AI Insights -->
-        <div class="mt-6 p-4 bg-white/10 rounded-2xl">
-            <h3 class="text-lg font-semibold mb-2">AI Insights</h3>
-            <p id="ai-insight" class="text-sm text-white/80"></p>
+        <p id="weather-desc" class="text-xl font-medium capitalize mt-2">--</p>
+        <p id="feels-like" class="text-white/50 text-sm">Feels like --°C</p>
+
+        <div class="mt-6 p-4 bg-white/5 border border-white/10 rounded-2xl">
+            <div class="flex items-center gap-2 mb-2 text-sky-400">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span class="text-xs font-bold uppercase tracking-widest">AI Insight</span>
+            </div>
+            <p id="ai-insight" class="text-sm leading-relaxed text-white/80">Connecting to satellites...</p>
         </div>
-       
-        <!-- Additional Details: Sunrise, Sunset, Visibility -->
-        <div class="grid grid-cols-3 gap-6 mt-6">
-            <!-- Sunrise -->
+
+        <div class="grid grid-cols-3 gap-4 mt-8">
             <div class="text-center">
-                <i class="fa-solid fa-sun text-yellow-400 text-3xl mb-3" aria-label="Sunrise Icon"></i>
-                <div class="text-[10px] tracking-widest text-white/50">SUNRISE</div>
-                <div id="sunrise-val" class="text-2xl font-medium mt-1">--:--</div>
+                <i class="fa-solid fa-droplet text-sky-400 mb-2"></i>
+                <p class="text-[10px] text-white/40 uppercase">Humidity</p>
+                <p class="font-bold"><span id="humidity-val">--</span>%</p>
             </div>
-            <!-- Sunset -->
             <div class="text-center">
-                <i class="fa-solid fa-moon text-yellow-400 text-3xl mb-3" aria-label="Sunset Icon"></i>
-                <div class="text-[10px] tracking-widest text-white/50">SUNSET</div>
-                <div id="sunset-val" class="text-2xl font-medium mt-1">--:--</div>
+                <i class="fa-solid fa-wind text-sky-400 mb-2"></i>
+                <p class="text-[10px] text-white/40 uppercase">Wind</p>
+                <p class="font-bold"><span id="wind-val">--</span> <small>m/s</small></p>
             </div>
-            <!-- Visibility -->
             <div class="text-center">
-                <i class="fa-solid fa-eye text-sky-400 text-3xl mb-3" aria-label="Visibility Icon"></i>
-                <div class="text-[10px] tracking-widest text-white/50">VISIBILITY</div>
-                <div id="visibility-val" class="text-2xl font-medium mt-1">10</div>
-                <div class="text-xs text-white/50">km</div>
+                <i class="fa-solid fa-sun text-yellow-400 mb-2"></i>
+                <p class="text-[10px] text-white/40 uppercase">UV Index</p>
+                <p id="uv-val" class="font-bold">--</p>
             </div>
         </div>
-       
-        <!-- Weather Details -->
-        <div class="grid grid-cols-3 gap-6 mt-6">
-            <!-- Humidity -->
-            <div class="text-center">
-                <i class="fa-solid fa-droplet text-sky-400 text-3xl mb-3" aria-label="Humidity Icon"></i>
-                <div class="text-[10px] tracking-widest text-white/50">HUMIDITY</div>
-                <div id="humidity-val" class="text-3xl font-medium mt-1">68</div>
-                <div class="text-xs text-white/50">%</div>
-            </div>
-            <!-- Wind -->
-            <div class="text-center">
-                <i class="fa-solid fa-wind text-sky-400 text-3xl mb-3" aria-label="Wind Icon"></i>
-                <div class="text-[10px] tracking-widest text-white/50">WIND</div>
-                <div id="wind-val" class="text-3xl font-medium mt-1">4.2</div>
-                <div class="text-xs text-white/50">m/s</div>
-            </div>
-            <!-- Pressure -->
-            <div class="text-center">
-                <i class="fa-solid fa-gauge-high text-sky-400 text-3xl mb-3" aria-label="Pressure Icon"></i>
-                <div class="text-[10px] tracking-widest text-white/50">PRESSURE</div>
-                <div id="pressure-val" class="text-3xl font-medium mt-1">1012</div>
-                <div class="text-xs text-white/50">hPa</div>
-            </div>
+
+        <div class="mt-8">
+            <p class="text-sm font-bold mb-4 flex items-center gap-2">
+                <i class="fa-regular fa-clock"></i> Hourly Forecast
+            </p>
+            <div id="hourly-forecast" class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide"></div>
         </div>
-       
-        <!-- UV Index -->
-        <div class="mt-6 text-center">
-            <i class="fa-solid fa-sun text-yellow-400 text-3xl mb-3" aria-label="UV Index Icon"></i>
-            <div class="text-[10px] tracking-widest text-white/50">UV INDEX</div>
-            <div id="uv-val" class="text-3xl font-medium mt-1">0</div>
-        </div>
-       
-        <!-- Hourly Forecast -->
-        <div class="mt-10">
-            <h3 class="text-lg font-semibold mb-4">Hourly Forecast</h3>
-            <div id="hourly-forecast" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-                <!-- Items will be added here -->
-            </div>
-        </div>
-       
-        <!-- 5-Day Forecast -->
-        <div class="mt-10">
-            <h3 class="text-lg font-semibold mb-4">5-Day Forecast</h3>
-            <div id="daily-forecast" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-                <!-- Items will be added here -->
-            </div>
-        </div>
-       
-        <div class="mt-10 text-center text-[10px] text-white/40 border-t border-white/10 pt-6">
-            Click on the map or search • OpenWeatherMap API
-        </div>
-    </div>
-   
-    <!-- Loading Spinner -->
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-black/70 z-[999] flex items-center justify-center">
+    </main>
+
+    <div id="loader" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center transition-opacity duration-500">
         <div class="text-center">
-            <div class="w-14 h-14 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
-            <p class="mt-6 text-sm tracking-[3px] text-white/60">LOADING WEATHER...</p>
+            <div class="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin mx-auto"></div>
+            <p class="mt-4 text-xs font-bold tracking-widest text-sky-400">FETCHING DATA</p>
         </div>
     </div>
-   
-    <!-- Error Toast -->
-    <div id="error-toast"
-         class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-red-600/90 text-white px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-4 z-[999]">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <span id="error-message" class="text-sm"></span>
-    </div>
-    <!-- Leaflet JS -->
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-   
     <script>
-        // ==================== IMPORTANT: PASTE YOUR API KEY HERE ====================
-        const API_KEY = 'a711d55b1e89708be65819eb07c0eeba'; // Replace with your actual key
-        // ===========================================================================
-       
+        const API_KEY = 'a711d55b1e89708be65819eb07c0eeba';
         let map;
-        let currentWeatherData = null;
-        let forecastData = null;
-        let layersControl;
-       
-        // Show loading
-        function showLoading() {
-            document.getElementById('loading-overlay').classList.remove('hidden');
+
+        // Initialize Map with Dark Theme
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([7.8731, 80.7718], 8);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            map.on('click', e => fetchWeather(e.latlng.lat, e.latlng.lng));
         }
-       
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }
-       
-        // Show error toast
-        function showError(message) {
-            const toast = document.getElementById('error-toast');
-            document.getElementById('error-message').textContent = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 4500);
-        }
-       
-        // ==================== RAIN ANIMATION ====================
-        function createRain() {
-            const container = document.getElementById('rain-container');
-            container.innerHTML = '';
-            for (let i = 0; i < 100; i++) { // Reduced for performance
-                const drop = document.createElement('div');
-                drop.className = 'drop';
-                drop.style.left = Math.random() * 100 + 'vw';
-                drop.style.animationDuration = (Math.random() * 0.6 + 0.35) + 's';
-                drop.style.animationDelay = '-' + Math.random() * 2 + 's';
-                drop.style.height = (Math.random() * 55 + 35) + 'px';
-                drop.style.opacity = Math.random() * 0.6 + 0.4;
-                container.appendChild(drop);
+
+        async function fetchWeather(lat, lon) {
+            document.getElementById('loader').style.opacity = '1';
+            document.getElementById('loader').style.display = 'flex';
+            
+            try {
+                const [curr, fore, uvRes] = await Promise.all([
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`).then(r => r.json()),
+                    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`).then(r => r.json()),
+                    fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`).then(r => r.json())
+                ]);
+
+                updateUI(curr, fore, uvRes.value);
+                map.flyTo([lat, lon], 10);
+            } catch (err) {
+                alert("දත්ත ලබා ගැනීමේ දෝෂයක්!");
+            } finally {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
             }
         }
-       
-        function showRain() {
-            const container = document.getElementById('rain-container');
-            container.classList.remove('hidden');
-            if (container.children.length === 0) createRain();
-        }
-       
-        // ==================== SNOW ANIMATION ====================
-        function createSnow() {
-            const container = document.getElementById('snow-container');
-            container.innerHTML = '';
-            for (let i = 0; i < 150; i++) {
-                const flake = document.createElement('div');
-                flake.className = 'snowflake';
-                flake.style.left = Math.random() * 100 + 'vw';
-                flake.style.animationDuration = (Math.random() * 4 + 4) + 's';
-                flake.style.animationDelay = '-' + Math.random() * 5 + 's';
-                flake.style.opacity = Math.random() * 0.5 + 0.5;
-                container.appendChild(flake);
-            }
-        }
-       
-        function showSnow() {
-            const container = document.getElementById('snow-container');
-            container.classList.remove('hidden');
-            if (container.children.length === 0) createSnow();
-        }
-       
-        // ==================== LIGHTNING ANIMATION ====================
-        function createLightning() {
-            const container = document.getElementById('lightning-container');
-            container.innerHTML = '';
-            const flash = document.createElement('div');
-            flash.className = 'lightning-flash';
-            flash.style.animationDelay = Math.random() * 3 + 's';
-            container.appendChild(flash);
-        }
-       
-        function showLightning() {
-            const container = document.getElementById('lightning-container');
-            container.classList.remove('hidden');
-            if (container.children.length === 0) createLightning();
-        }
-       
-        // ==================== FOG ANIMATION ====================
-        function createFog() {
-            const container = document.getElementById('fog-container');
-            container.innerHTML = '';
-            for (let i = 0; i < 3; i++) {
-                const fog = document.createElement('div');
-                fog.className = 'fog-layer';
-                fog.style.top = (Math.random() * 50 + 25) + 'vh';
-                fog.style.animationDuration = (50 + Math.random() * 20) + 's';
-                fog.style.animationDelay = '-' + Math.random() * 30 + 's';
-                fog.style.opacity = 0.2 + Math.random() * 0.1;
-                container.appendChild(fog);
-            }
-        }
-       
-        function showFog() {
-            const container = document.getElementById('fog-container');
-            container.classList.remove('hidden');
-            if (container.children.length === 0) createFog();
-        }
-       
-        // ==================== CLOUDS ANIMATION ====================
-        function createClouds() {
-            const container = document.getElementById('clouds-container');
-            container.innerHTML = '';
-            const emojis = ['☁️', '☁️', '🌥️', '☁️'];
-            for (let i = 0; i < 7; i++) {
-                const cloud = document.createElement('div');
-                cloud.className = 'cloud';
-                cloud.textContent = emojis[i % emojis.length];
-                cloud.style.top = (15 + Math.random() * 45) + 'vh';
-                cloud.style.animationDuration = (45 + Math.random() * 35) + 's';
-                cloud.style.animationDelay = '-' + Math.random() * 40 + 's';
-                cloud.style.fontSize = (110 + Math.random() * 70) + 'px';
-                container.appendChild(cloud);
-            }
-        }
-       
-        function showClouds() {
-            const container = document.getElementById('clouds-container');
-            container.classList.remove('hidden');
-            if (container.children.length === 0) createClouds();
-        }
-       
-        // ==================== STARS ANIMATION (Night) ====================
-        function createStars() {
-            const container = document.getElementById('stars-container');
-            container.innerHTML = '';
-            for (let i = 0; i < 150; i++) { // Reduced for performance
-                const star = document.createElement('div');
-                star.className = 'star';
-                const size = Math.random() * 3.5 + 1;
-                star.style.width = size + 'px';
-                star.style.height = size + 'px';
-                star.style.left = Math.random() * 100 + 'vw';
-                star.style.top = Math.random() * 75 + 'vh';
-                star.style.animationDuration = (1.2 + Math.random() * 2) + 's';
-                container.appendChild(star);
-            }
-        }
-       
-        function showStars() {
-            const container = document.getElementById('stars-container');
-            container.classList.remove('hidden');
-            if (container.children.length === 0) createStars();
-        }
-       
-        function hideAllAnimations() {
-            document.getElementById('rain-container').classList.add('hidden');
-            document.getElementById('snow-container').classList.add('hidden');
-            document.getElementById('lightning-container').classList.add('hidden');
-            document.getElementById('fog-container').classList.add('hidden');
-            document.getElementById('clouds-container').classList.add('hidden');
-            document.getElementById('stars-container').classList.add('hidden');
-        }
-       
-        // Apply correct animation based on weather
-        function applyDynamicAnimations(mainCondition, iconCode) {
-            hideAllAnimations();
-            const isNight = iconCode.endsWith('n');
-           
-            if (mainCondition === 'Rain' || mainCondition === 'Drizzle') {
-                showRain();
-            } else if (mainCondition === 'Thunderstorm') {
-                showRain();
-                showLightning();
-            } else if (mainCondition === 'Snow') {
-                showSnow();
-            } else if (mainCondition === 'Mist' || mainCondition === 'Fog') {
-                showFog();
-            } else if (mainCondition === 'Clouds') {
-                showClouds();
-            } else if (mainCondition === 'Clear') {
-                if (isNight) {
-                    showStars();
-                } else {
-                    // Sunny glow on icon
-                    const icon = document.getElementById('weather-icon');
-                    icon.classList.add('sunny-glow');
-                    setTimeout(() => icon.classList.remove('sunny-glow'), 7000);
-                }
-            }
-            // Add more conditions if needed
-        }
-       
-        // Format time
-        function formatTime(timestamp) {
-            const date = new Date(timestamp * 1000);
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-        }
-       
-        // Format date for forecast (with Sinhala support if available)
-        function formatDate(timestamp) {
-            const date = new Date(timestamp * 1000);
-            return date.toLocaleDateString('si', { weekday: 'short', month: 'short', day: 'numeric' }); // Sinhala locale
-        }
-       
-        // Generate AI Insight (improved with more conditions and personalization)
-        function generateAIInsight(data) {
-            const main = data.weather[0].main;
-            const temp = Math.round(data.main.temp);
-            const humidity = data.main.humidity;
-            const wind = data.wind.speed;
-            let insight = '';
-           
-            if (main === 'Rain' || main === 'Drizzle' || main === 'Thunderstorm') {
-                insight = `අද වැසි තත්ත්වයක් නිසා umbrella හෝ raincoat ගෙන යන්න. Wind speed ${wind.toFixed(1)} m/s නිසා පරිස්සම් වෙන්න. Flood risk තියෙන areas වලට යන්න එපා.`;
-            } else if (main === 'Snow') {
-                insight = `හිම පතනයක් තියෙනවා – warm clothes පලඳින්න සහ driving කරනකොට careful වෙන්න. Temperature ${temp}°C නිසා hypothermia risk තියෙනවා.`;
-            } else if (main === 'Clear') {
-                insight = `අද sunny day! Sunscreen apply කරන්න සහ hydrate වෙන්න. Temperature ${temp}°C නිසා outdoor activities සඳහා perfect. ඒත් UV levels check කරන්න.`;
-            } else if (main === 'Clouds') {
-                insight = `වලාකුළු සහිත දවසක් – light jacket එකක් ගෙන යන්න. Humidity ${humidity}% නිසා allergies තියෙන අය careful වෙන්න.`;
-            } else if (main === 'Mist' || main === 'Fog') {
-                insight = `මීදුම් තත්ත්වයක් නිසා visibility low – driving කරනකොට lights on කරන්න. Respiratory issues තියෙන අය indoor stay කරන්න.`;
-            } else {
-                insight = `අද weather එක සාමාන්‍යයි. Temperature ${temp}°C සහ humidity ${humidity}% – daily routine සඳහා good.`;
-            }
-           
-            // Add local personalization for Badulla (since user location is Badulla)
-            if (data.name.toLowerCase().includes('badulla')) {
-                insight += ' Badulla වල hilly terrain නිසා වැසි කාලෙදි landslides risk තියෙනවා – updates check කරන්න.';
-            }
-           
-            // Add health tip based on temp
-            if (temp > 30) {
-                insight += ' Heatwave risk – plenty of water drink කරන්න.';
-            } else if (temp < 15) {
-                insight += ' Cold weather – warm up කරන්න.';
-            }
-           
-            return insight;
-        }
-       
-        // Update Weather Card
-        function updateUI(data, forecast) {
-            currentWeatherData = data;
-            forecastData = forecast;
-           
-            // Save to local storage for offline
-            localStorage.setItem('lastWeatherData', JSON.stringify(data));
-            localStorage.setItem('lastForecastData', JSON.stringify(forecast));
-           
-            // City
-            document.getElementById('city-name').innerHTML = `${data.name} <span class="text-sm font-normal text-white/60">, ${data.sys.country}</span>`;
-           
-            // Temperature
-            document.getElementById('temperature').textContent = Math.round(data.main.temp);
-           
-            // Description
-            const desc = data.weather[0].description;
-            document.getElementById('weather-desc').textContent = desc.charAt(0).toUpperCase() + desc.slice(1);
-           
-            // Feels like
-            document.getElementById('feels-like').textContent = `Feels like ${Math.round(data.main.feels_like)}°C`;
-           
-            // Icon
-            const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
-            document.getElementById('weather-icon').src = iconUrl;
-            document.getElementById('weather-icon').alt = `${desc} Icon`;
-           
-            // Details
-            document.getElementById('humidity-val').textContent = data.main.humidity;
-            document.getElementById('wind-val').textContent = data.wind.speed.toFixed(1);
-            document.getElementById('pressure-val').textContent = data.main.pressure;
-           
-            // Additional Details
-            document.getElementById('sunrise-val').textContent = formatTime(data.sys.sunrise);
-            document.getElementById('sunset-val').textContent = formatTime(data.sys.sunset);
-            document.getElementById('visibility-val').textContent = (data.visibility / 1000).toFixed(1);
-           
-            // Date
-            const dateEl = document.getElementById('current-date');
-            const now = new Date();
-            const options = { weekday: 'short', month: 'long', day: 'numeric' };
-            dateEl.textContent = now.toLocaleDateString('en-US', options);
-           
-            // AI Insight (improved)
-            const insightEl = document.getElementById('ai-insight');
-            insightEl.textContent = generateAIInsight(data);
-           
-            // Dynamic animations
-            applyDynamicAnimations(data.weather[0].main, data.weather[0].icon);
-           
-            // Update Hourly Forecast (next 8 hours)
+
+        function updateUI(data, forecast, uv) {
+            const card = document.getElementById('weather-card');
+            card.classList.remove('opacity-0', 'translate-y-10');
+            
+            document.getElementById('city-name').innerText = data.name;
+            document.getElementById('temperature').innerText = Math.round(data.main.temp);
+            document.getElementById('weather-desc').innerText = data.weather[0].description;
+            document.getElementById('humidity-val').innerText = data.main.humidity;
+            document.getElementById('wind-val').innerText = data.wind.speed;
+            document.getElementById('feels-like').innerText = `Feels like ${Math.round(data.main.feels_like)}°C`;
+            document.getElementById('uv-val').innerText = Math.round(uv || 0);
+            document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('si-LK', { dateStyle: 'long'});
+
+            // AI Insight Logic
+            let insight = `අද ${data.name} වල පවතින්නේ ${data.weather[0].description} තත්ත්වයක්. `;
+            if(data.main.temp > 30) insight += "අධික රුෂ්නයක් තියෙනවා, හොඳින් වතුර බොන්න.";
+            else if(data.weather[0].main == 'Rain') insight += "වැසි සහිතයි, කුඩයක් රැගෙන යන්න.";
+            else insight += "එළිමහන් කටයුතු වලට සුදුසු කාලගුණයක් පවතිනවා.";
+            document.getElementById('ai-insight').innerText = insight;
+
+            // Hourly Forecast
             const hourlyContainer = document.getElementById('hourly-forecast');
             hourlyContainer.innerHTML = '';
-            for (let i = 0; i < 8; i++) {
-                const item = forecast.list[i];
-                const div = document.createElement('div');
-                div.className = 'forecast-item bg-white/10 rounded-2xl p-3 text-center';
-                div.innerHTML = `
-                    <div class="text-sm text-white/70">${formatTime(item.dt)}</div>
-                    <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description} Icon" class="w-10 mx-auto">
-                    <div class="text-xl">${Math.round(item.main.temp)}°C</div>
-                    <div class="text-xs text-white/50 capitalize forecast-desc">${item.weather[0].description}</div>
+            forecast.list.slice(0, 8).forEach(item => {
+                const time = new Date(item.dt * 1000).getHours() + ":00";
+                hourlyContainer.innerHTML += `
+                    <div class="min-w-[70px] bg-white/5 p-3 rounded-2xl text-center border border-white/5">
+                        <p class="text-[10px] text-white/50 mb-1">${time}</p>
+                        <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" class="w-8 mx-auto">
+                        <p class="font-bold mt-1">${Math.round(item.main.temp)}°</p>
+                    </div>
                 `;
-                hourlyContainer.appendChild(div);
-            }
-           
-            // Update Daily Forecast (improved with avg temp)
-            const dailyContainer = document.getElementById('daily-forecast');
-            dailyContainer.innerHTML = '';
-            const dailyData = {};
-            forecast.list.forEach(item => {
-                const dayKey = formatDate(item.dt).split(' ')[0]; // Weekday
-                if (!dailyData[dayKey]) {
-                    dailyData[dayKey] = { temps: [], icons: [], descs: [], date: formatDate(item.dt) };
-                }
-                dailyData[dayKey].temps.push(item.main.temp);
-                dailyData[dayKey].icons.push(item.weather[0].icon);
-                dailyData[dayKey].descs.push(item.weather[0].description);
             });
-            Object.entries(dailyData).slice(1, 6).forEach(([key, day]) => { // Skip today
-                const avgTemp = Math.round(day.temps.reduce((a, b) => a + b, 0) / day.temps.length);
-                const mostCommonIcon = day.icons.sort((a,b) => day.icons.filter(v => v===a).length - day.icons.filter(v => v===b).length).pop();
-                const mostCommonDesc = day.descs.sort((a,b) => day.descs.filter(v => v===a).length - day.descs.filter(v => v===b).length).pop();
-                const div = document.createElement('div');
-                div.className = 'forecast-item bg-white/10 rounded-2xl p-3 text-center';
-                div.innerHTML = `
-                    <div class="text-sm text-white/70">${day.date}</div>
-                    <img src="https://openweathermap.org/img/wn/${mostCommonIcon}.png" alt="${mostCommonDesc} Icon" class="w-10 mx-auto">
-                    <div class="text-xl">${avgTemp}°C</div>
-                    <div class="text-xs text-white/50 capitalize forecast-desc">${mostCommonDesc}</div>
-                `;
-                dailyContainer.appendChild(div);
-            });
-           
-            // Make card visible with animation
-            const card = document.getElementById('weather-card');
-            card.classList.remove('opacity-0');
+
+            triggerAnimations(data.weather[0].main);
         }
-       
-        // Fetch UV Index
-        async function fetchUV(lat, lon) {
-            try {
-                const uvUrl = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
-                const res = await fetch(uvUrl);
-                if (!res.ok) throw new Error('UV data fetch failed');
-                const data = await res.json();
-                document.getElementById('uv-val').textContent = Math.round(data.value);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('uv-val').textContent = 'N/A';
-            }
-        }
-       
-        // Fetch weather and forecast (city or coordinates)
-        async function fetchWeather(lat = null, lon = null, city = null) {
-            if (API_KEY === '') {
-                showError('API Key එක paste කරන්න! කේතයේ තියෙන තැනට ඔබේ key එක දාන්න.');
-                return;
-            }
-           
-            showLoading();
-           
-            try {
-                let weatherUrl = `https://api.openweathermap.org/data/2.5/weather?appid=${API_KEY}&units=metric`;
-                let forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?appid=${API_KEY}&units=metric`;
-               
-                if (city) {
-                    weatherUrl += `&q=${encodeURIComponent(city)}`;
-                    forecastUrl += `&q=${encodeURIComponent(city)}`;
-                } else if (lat && lon) {
-                    weatherUrl += `&lat=${lat}&lon=${lon}`;
-                    forecastUrl += `&lat=${lat}&lon=${lon}`;
+
+        function triggerAnimations(condition) {
+            const layer = document.getElementById('anim-layer');
+            layer.innerHTML = '';
+            
+            if (condition === 'Rain' || condition === 'Drizzle') {
+                for (let i = 0; i < 60; i++) {
+                    const drop = document.createElement('div');
+                    drop.className = 'drop';
+                    drop.style.left = Math.random() * 100 + 'vw';
+                    drop.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
+                    drop.style.height = Math.random() * 30 + 20 + 'px';
+                    layer.appendChild(drop);
                 }
-               
-                const [weatherRes, forecastRes] = await Promise.all([
-                    fetch(weatherUrl),
-                    fetch(forecastUrl)
-                ]);
-               
-                if (!weatherRes.ok || !forecastRes.ok) {
-                    throw new Error('API වල ගැටළුවක් තියෙනවා. නගරය හෝ API key check කරන්න.');
+            } else if (condition === 'Clear') {
+                for (let i = 0; i < 50; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + 'vw';
+                    star.style.top = Math.random() * 100 + 'vh';
+                    star.style.width = star.style.height = Math.random() * 3 + 'px';
+                    layer.appendChild(star);
                 }
-               
-                const [weatherData, forecastData] = await Promise.all([
-                    weatherRes.json(),
-                    forecastRes.json()
-                ]);
-               
-                updateUI(weatherData, forecastData);
-                // Fetch UV after getting coords
-                fetchUV(weatherData.coord.lat, weatherData.coord.lon);
-                hideLoading();
-               
-                // Center map on location
-                map.setView([weatherData.coord.lat, weatherData.coord.lon], 10);
-            } catch (err) {
-                hideLoading();
-                showError(err.message);
-                // Offline fallback
-                const lastWeather = localStorage.getItem('lastWeatherData');
-                const lastForecast = localStorage.getItem('lastForecastData');
-                if (lastWeather && lastForecast) {
-                    updateUI(JSON.parse(lastWeather), JSON.parse(lastForecast));
-                    showError('Offline mode: Showing last fetched data.');
+            } else if (condition === 'Clouds') {
+                for (let i = 0; i < 5; i++) {
+                    const cloud = document.createElement('div');
+                    cloud.className = 'cloud';
+                    cloud.innerHTML = '☁️';
+                    cloud.style.fontSize = Math.random() * 100 + 50 + 'px';
+                    cloud.style.top = Math.random() * 60 + 'vh';
+                    cloud.style.animationDuration = (Math.random() * 30 + 30) + 's';
+                    layer.appendChild(cloud);
                 }
             }
         }
-       
-        // Map click handler
-        function onMapClick(e) {
-            const lat = e.latlng.lat;
-            const lon = e.latlng.lng;
-            fetchWeather(lat, lon);
+
+        async function searchCity(city) {
+            const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${API_KEY}`).then(r => r.json());
+            if (res.length > 0) fetchWeather(res[0].lat, res[0].lon);
         }
-       
-        // Initialize Leaflet Map (centered on Badulla)
-        function initMap() {
-            map = L.map('map', {
-                zoomControl: true,
-                attributionControl: false
-            }).setView([6.9934, 81.055], 9); // Badulla coordinates
-           
-            const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }).addTo(map);
-           
-            // Weather overlay layers (like radar)
-            const precipitation = L.tileLayer(`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${API_KEY}`, {
-                attribution: '',
-                opacity: 0.7
-            });
-           
-            const clouds = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${API_KEY}`, {
-                attribution: '',
-                opacity: 0.7
-            });
-           
-            const temp = L.tileLayer(`https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${API_KEY}`, {
-                attribution: '',
-                opacity: 0.7
-            });
-           
-            const wind = L.tileLayer(`https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${API_KEY}`, {
-                attribution: '',
-                opacity: 0.7
-            });
-           
-            // Layer control
-            const baseLayers = {
-                "Street Map": baseLayer
-            };
-            const overlays = {
-                "Precipitation": precipitation,
-                "Clouds": clouds,
-                "Temperature": temp,
-                "Wind": wind
-            };
-            layersControl = L.control.layers(baseLayers, overlays).addTo(map);
-           
-            // Click on any place
-            map.on('click', onMapClick);
-        }
-       
-        // Search form
-        function setupSearch() {
-            const form = document.getElementById('search-form');
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const input = document.getElementById('search-input');
-                const city = input.value.trim();
-                if (city.length > 2) {
-                    fetchWeather(null, null, city);
-                    input.value = '';
-                }
-            });
-        }
-       
-        // Browser Geolocation (My Location button)
+
         function getUserLocation() {
-            if (!navigator.geolocation) {
-                showError('ඔබේ browser එකේ location support නැහැ.');
-                return;
-            }
-            showLoading();
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    fetchWeather(pos.coords.latitude, pos.coords.longitude);
-                },
-                () => {
-                    hideLoading();
-                    showError('Location permission දෙන්න පුළුවන් නැහැ.');
-                }
-            );
+            navigator.geolocation.getCurrentPosition(p => fetchWeather(p.coords.latitude, p.coords.longitude));
         }
-       
-        // Page load කරනකොට run වෙන function
-        window.onload = function() {
+
+        document.getElementById('search-form').onsubmit = e => {
+            e.preventDefault();
+            searchCity(document.getElementById('search-input').value);
+        };
+
+        window.onload = () => {
             initMap();
-            setupSearch();
-           
-            // Default: Badulla weather load වෙනවා
-            fetchWeather(6.9934, 81.055);
-           
-            // Card එක smooth පෙන්වන්න
-            setTimeout(() => {
-                document.getElementById('weather-card').classList.add('weather-card');
-            }, 1200);
-           
-            console.log('%c✅ Weatherly successfully loaded! API key paste කළාද? Map එකේ ඕනෑම තැනක click කරන්න.', 'color:#22c55e; font-size:13px');
+            searchCity('Badulla'); // Default නගරය
         };
     </script>
 </body>
 </html>
-
-
-
-
