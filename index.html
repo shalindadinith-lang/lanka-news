@@ -268,19 +268,19 @@
         <div class="grid grid-cols-3 gap-6 mt-6">
             <!-- Sunrise -->
             <div class="text-center">
-                <i class="fa-solid fa-sun text-yellow-400 text-3xl mb-3"></i>
+                <i class="fa-solid fa-sun text-yellow-400 text-3xl mb-3" aria-label="Sunrise Icon"></i>
                 <div class="text-[10px] tracking-widest text-white/50">SUNRISE</div>
                 <div id="sunrise-val" class="text-2xl font-medium mt-1">--:--</div>
             </div>
             <!-- Sunset -->
             <div class="text-center">
-                <i class="fa-solid fa-moon text-yellow-400 text-3xl mb-3"></i>
+                <i class="fa-solid fa-moon text-yellow-400 text-3xl mb-3" aria-label="Sunset Icon"></i>
                 <div class="text-[10px] tracking-widest text-white/50">SUNSET</div>
                 <div id="sunset-val" class="text-2xl font-medium mt-1">--:--</div>
             </div>
             <!-- Visibility -->
             <div class="text-center">
-                <i class="fa-solid fa-eye text-sky-400 text-3xl mb-3"></i>
+                <i class="fa-solid fa-eye text-sky-400 text-3xl mb-3" aria-label="Visibility Icon"></i>
                 <div class="text-[10px] tracking-widest text-white/50">VISIBILITY</div>
                 <div id="visibility-val" class="text-2xl font-medium mt-1">10</div>
                 <div class="text-xs text-white/50">km</div>
@@ -291,25 +291,32 @@
         <div class="grid grid-cols-3 gap-6 mt-6">
             <!-- Humidity -->
             <div class="text-center">
-                <i class="fa-solid fa-droplet text-sky-400 text-3xl mb-3"></i>
+                <i class="fa-solid fa-droplet text-sky-400 text-3xl mb-3" aria-label="Humidity Icon"></i>
                 <div class="text-[10px] tracking-widest text-white/50">HUMIDITY</div>
                 <div id="humidity-val" class="text-3xl font-medium mt-1">68</div>
                 <div class="text-xs text-white/50">%</div>
             </div>
             <!-- Wind -->
             <div class="text-center">
-                <i class="fa-solid fa-wind text-sky-400 text-3xl mb-3"></i>
+                <i class="fa-solid fa-wind text-sky-400 text-3xl mb-3" aria-label="Wind Icon"></i>
                 <div class="text-[10px] tracking-widest text-white/50">WIND</div>
                 <div id="wind-val" class="text-3xl font-medium mt-1">4.2</div>
                 <div class="text-xs text-white/50">m/s</div>
             </div>
             <!-- Pressure -->
             <div class="text-center">
-                <i class="fa-solid fa-gauge-high text-sky-400 text-3xl mb-3"></i>
+                <i class="fa-solid fa-gauge-high text-sky-400 text-3xl mb-3" aria-label="Pressure Icon"></i>
                 <div class="text-[10px] tracking-widest text-white/50">PRESSURE</div>
                 <div id="pressure-val" class="text-3xl font-medium mt-1">1012</div>
                 <div class="text-xs text-white/50">hPa</div>
             </div>
+        </div>
+       
+        <!-- UV Index -->
+        <div class="mt-6 text-center">
+            <i class="fa-solid fa-sun text-yellow-400 text-3xl mb-3" aria-label="UV Index Icon"></i>
+            <div class="text-[10px] tracking-widest text-white/50">UV INDEX</div>
+            <div id="uv-val" class="text-3xl font-medium mt-1">0</div>
         </div>
        
         <!-- Hourly Forecast -->
@@ -352,7 +359,7 @@
    
     <script>
         // ==================== IMPORTANT: PASTE YOUR API KEY HERE ====================
-        const API_KEY = 'a711d55b1e89708be65819eb07c0eeba';
+        const API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY_HERE'; // Replace with your actual key
         // ===========================================================================
        
         let map;
@@ -383,7 +390,7 @@
         function createRain() {
             const container = document.getElementById('rain-container');
             container.innerHTML = '';
-            for (let i = 0; i < 180; i++) {
+            for (let i = 0; i < 100; i++) { // Reduced for performance
                 const drop = document.createElement('div');
                 drop.className = 'drop';
                 drop.style.left = Math.random() * 100 + 'vw';
@@ -486,7 +493,7 @@
         function createStars() {
             const container = document.getElementById('stars-container');
             container.innerHTML = '';
-            for (let i = 0; i < 280; i++) {
+            for (let i = 0; i < 150; i++) { // Reduced for performance
                 const star = document.createElement('div');
                 star.className = 'star';
                 const size = Math.random() * 3.5 + 1;
@@ -549,10 +556,10 @@
             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         }
        
-        // Format date for forecast
+        // Format date for forecast (with Sinhala support if available)
         function formatDate(timestamp) {
             const date = new Date(timestamp * 1000);
-            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            return date.toLocaleDateString('si', { weekday: 'short', month: 'short', day: 'numeric' }); // Sinhala locale
         }
        
         // Generate AI Insight (improved with more conditions and personalization)
@@ -597,6 +604,10 @@
             currentWeatherData = data;
             forecastData = forecast;
            
+            // Save to local storage for offline
+            localStorage.setItem('lastWeatherData', JSON.stringify(data));
+            localStorage.setItem('lastForecastData', JSON.stringify(forecast));
+           
             // City
             document.getElementById('city-name').innerHTML = `${data.name} <span class="text-sm font-normal text-white/60">, ${data.sys.country}</span>`;
            
@@ -613,6 +624,7 @@
             // Icon
             const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
             document.getElementById('weather-icon').src = iconUrl;
+            document.getElementById('weather-icon').alt = `${desc} Icon`;
            
             // Details
             document.getElementById('humidity-val').textContent = data.main.humidity;
@@ -646,36 +658,37 @@
                 div.className = 'forecast-item bg-white/10 rounded-2xl p-3 text-center';
                 div.innerHTML = `
                     <div class="text-sm text-white/70">${formatTime(item.dt)}</div>
-                    <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="icon" class="w-10 mx-auto">
+                    <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description} Icon" class="w-10 mx-auto">
                     <div class="text-xl">${Math.round(item.main.temp)}°C</div>
                     <div class="text-xs text-white/50 capitalize forecast-desc">${item.weather[0].description}</div>
                 `;
                 hourlyContainer.appendChild(div);
             }
            
-            // Update Daily Forecast (group by day)
+            // Update Daily Forecast (improved with avg temp)
             const dailyContainer = document.getElementById('daily-forecast');
             dailyContainer.innerHTML = '';
             const dailyData = {};
             forecast.list.forEach(item => {
-                const day = formatDate(item.dt).split(' ')[0]; // Weekday
-                if (!dailyData[day]) {
-                    dailyData[day] = {
-                        temp: Math.round(item.main.temp),
-                        icon: item.weather[0].icon,
-                        desc: item.weather[0].description,
-                        date: formatDate(item.dt)
-                    };
+                const dayKey = formatDate(item.dt).split(' ')[0]; // Weekday
+                if (!dailyData[dayKey]) {
+                    dailyData[dayKey] = { temps: [], icons: [], descs: [], date: formatDate(item.dt) };
                 }
+                dailyData[dayKey].temps.push(item.main.temp);
+                dailyData[dayKey].icons.push(item.weather[0].icon);
+                dailyData[dayKey].descs.push(item.weather[0].description);
             });
-            Object.values(dailyData).slice(1, 6).forEach(day => { // Skip today, next 5 days
+            Object.entries(dailyData).slice(1, 6).forEach(([key, day]) => { // Skip today
+                const avgTemp = Math.round(day.temps.reduce((a, b) => a + b, 0) / day.temps.length);
+                const mostCommonIcon = day.icons.sort((a,b) => day.icons.filter(v => v===a).length - day.icons.filter(v => v===b).length).pop();
+                const mostCommonDesc = day.descs.sort((a,b) => day.descs.filter(v => v===a).length - day.descs.filter(v => v===b).length).pop();
                 const div = document.createElement('div');
                 div.className = 'forecast-item bg-white/10 rounded-2xl p-3 text-center';
                 div.innerHTML = `
                     <div class="text-sm text-white/70">${day.date}</div>
-                    <img src="https://openweathermap.org/img/wn/${day.icon}.png" alt="icon" class="w-10 mx-auto">
-                    <div class="text-xl">${day.temp}°C</div>
-                    <div class="text-xs text-white/50 capitalize forecast-desc">${day.desc}</div>
+                    <img src="https://openweathermap.org/img/wn/${mostCommonIcon}.png" alt="${mostCommonDesc} Icon" class="w-10 mx-auto">
+                    <div class="text-xl">${avgTemp}°C</div>
+                    <div class="text-xs text-white/50 capitalize forecast-desc">${mostCommonDesc}</div>
                 `;
                 dailyContainer.appendChild(div);
             });
@@ -685,9 +698,23 @@
             card.classList.remove('opacity-0');
         }
        
+        // Fetch UV Index
+        async function fetchUV(lat, lon) {
+            try {
+                const uvUrl = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+                const res = await fetch(uvUrl);
+                if (!res.ok) throw new Error('UV data fetch failed');
+                const data = await res.json();
+                document.getElementById('uv-val').textContent = Math.round(data.value);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('uv-val').textContent = 'N/A';
+            }
+        }
+       
         // Fetch weather and forecast (city or coordinates)
         async function fetchWeather(lat = null, lon = null, city = null) {
-            if (API_KEY === 'a711d55b1e89708be65819eb07c0eeba') {
+            if (API_KEY === 'YOUR_OPENWEATHERMAP_API_KEY_HERE') {
                 showError('API Key එක paste කරන්න! කේතයේ තියෙන තැනට ඔබේ key එක දාන්න.');
                 return;
             }
@@ -721,6 +748,8 @@
                 ]);
                
                 updateUI(weatherData, forecastData);
+                // Fetch UV after getting coords
+                fetchUV(weatherData.coord.lat, weatherData.coord.lon);
                 hideLoading();
                
                 // Center map on location
@@ -728,6 +757,13 @@
             } catch (err) {
                 hideLoading();
                 showError(err.message);
+                // Offline fallback
+                const lastWeather = localStorage.getItem('lastWeatherData');
+                const lastForecast = localStorage.getItem('lastForecastData');
+                if (lastWeather && lastForecast) {
+                    updateUI(JSON.parse(lastWeather), JSON.parse(lastForecast));
+                    showError('Offline mode: Showing last fetched data.');
+                }
             }
         }
        
