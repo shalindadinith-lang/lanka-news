@@ -1,117 +1,524 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SL 3D News Channel</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600&display=swap" rel="stylesheet">
-
-<style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Noto Sans Sinhala', sans-serif;
-}
-
-body{
-  background:linear-gradient(135deg,#1e3c72,#2a5298,#6a11cb);
-  min-height:100vh;
-  color:white;
-  overflow-x:hidden;
-}
-
-header{
-  text-align:center;
-  padding:30px;
-  font-size:28px;
-  font-weight:bold;
-  letter-spacing:2px;
-  text-shadow:0 0 15px rgba(255,255,255,0.6);
-}
-
-.section-title{
-  text-align:center;
-  margin:40px 0 20px;
-  font-size:22px;
-  background:rgba(255,255,255,0.1);
-  display:inline-block;
-  padding:10px 25px;
-  border-radius:30px;
-  backdrop-filter:blur(10px);
-}
-
-.container{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-  gap:25px;
-  padding:20px 40px;
-}
-
-.news-card{
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(15px);
-  padding:20px;
-  border-radius:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.3);
-  transition:0.5s;
-  transform-style:preserve-3d;
-  animation:fadeIn 1s ease forwards;
-}
-
-.news-card:hover{
-  transform:rotateY(10deg) rotateX(5deg) scale(1.05);
-  box-shadow:0 20px 40px rgba(0,0,0,0.5);
-}
-
-.news-card a{
-  color:#fff;
-  text-decoration:none;
-  font-weight:600;
-  font-size:16px;
-}
-
-.news-card p{
-  font-size:13px;
-  margin-top:8px;
-  opacity:0.8;
-}
-
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(30px);}
-  to{opacity:1;transform:translateY(0);}
-}
-
-footer{
-  text-align:center;
-  padding:30px;
-  opacity:0.7;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weatherly • Interactive Map</title>
+    <!-- Tailwind CSS CDN (modern UI සඳහා) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet Map CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --primary: #3b82f6;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        /* Animated Gradient Background */
+        #bg {
+            background: linear-gradient(135deg, #0f172a, #1e2937, #334155, #1e40af);
+            background-size: 400% 400%;
+            animation: gradientShift 25s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Glassmorphism Card */
+        .glass {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+        }
+        
+        /* Map Styling */
+        #map {
+            filter: contrast(1.05) saturate(1.15);
+        }
+        
+        /* Rain Animation */
+        @keyframes fall {
+            to { transform: translateY(120vh); }
+        }
+        .drop {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(transparent, #93c5fd);
+            box-shadow: 0 0 8px #60a5fa;
+            animation: fall linear infinite;
+        }
+        
+        /* Cloud Animation */
+        @keyframes drift {
+            from { transform: translateX(-200%); }
+            to { transform: translateX(250vw); }
+        }
+        .cloud {
+            position: absolute;
+            font-size: 140px;
+            opacity: 0.65;
+            filter: blur(2px);
+            animation: drift linear infinite;
+            text-shadow: 0 0 30px rgba(255,255,255,0.6);
+        }
+        
+        /* Stars Animation */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff;
+            animation: twinkle 2s infinite alternate ease-in-out;
+        }
+        
+        /* Sunny Glow */
+        @keyframes sunny-glow {
+            0%, 100% { filter: drop-shadow(0 0 30px #facc15); }
+            50% { filter: drop-shadow(0 0 70px #fde047); }
+        }
+        .sunny-glow {
+            animation: sunny-glow 4s ease-in-out infinite;
+        }
+        
+        /* Fade-in Animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .weather-card {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        /* Smooth hover effects */
+        .glass:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px -15px rgb(0 0 0 / 0.5);
+        }
+    </style>
 </head>
-<body>
+<body class="bg-black text-white overflow-hidden h-screen relative">
+    
+    <!-- Animated Gradient Background -->
+    <div id="bg" class="fixed inset-0 z-[-1]"></div>
+    
+    <!-- Full-screen Leaflet Map -->
+    <div id="map" class="fixed inset-0 z-0"></div>
+    
+    <!-- Weather Animations Container (pointer-events-none මෙය නිසා map එක click කරන්න පුළුවන්) -->
+    <div id="animations-layer" class="fixed inset-0 z-[5] pointer-events-none"></div>
+    
+    <!-- Rain Container -->
+    <div id="rain-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    
+    <!-- Clouds Container -->
+    <div id="clouds-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
+    
+    <!-- Stars Container -->
+    <div id="stars-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    
+    <!-- Top Header with Search -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center gap-x-3">
+                <i class="fa-solid fa-cloud-sun text-4xl text-sky-400"></i>
+                <div>
+                    <h1 class="title-font text-3xl font-semibold tracking-tighter">Weatherly</h1>
+                    <p class="text-[10px] text-white/50 -mt-1 tracking-[2px]">LIVE MAP</p>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <form id="search-form" class="flex-1 max-w-md mx-8">
+                <div class="relative group">
+                    <input id="search-input" 
+                           type="text" 
+                           placeholder="නගරයක් සොයන්න... (Badulla උදාහරණය)" 
+                           class="w-full bg-white/10 border border-white/30 focus:border-sky-400 transition-all rounded-3xl px-6 py-4 pl-14 text-sm placeholder:text-white/60 focus:outline-none">
+                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-white/60 text-lg"></i>
+                </div>
+            </form>
+            
+            <!-- My Location Button -->
+            <button onclick="getUserLocation()" 
+                    class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-all px-6 py-4 rounded-3xl text-sm font-medium">
+                <i class="fa-solid fa-location-dot"></i>
+                <span class="hidden md:block">මගේ ස්ථානය</span>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Glassmorphism Weather Card (Mobile එකේත් පහතටම responsive වෙනවා) -->
+    <div id="weather-card" 
+         class="glass fixed top-28 left-6 md:left-8 w-full max-w-[380px] rounded-3xl p-8 z-50 weather-card opacity-0">
+        
+        <!-- City & Date -->
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <div id="city-name" class="text-3xl font-semibold title-font tracking-tight">Badulla, LK</div>
+                <div id="current-date" class="text-white/60 text-sm mt-1">Today • March 02, 2026</div>
+            </div>
+            <img id="weather-icon" 
+                 src="https://openweathermap.org/img/wn/02d@4x.png" 
+                 alt="Weather Icon" 
+                 class="w-28 h-28 -mt-6 transition-all">
+        </div>
+        
+        <!-- Temperature -->
+        <div class="flex items-end gap-2 mb-2">
+            <div id="temperature" class="text-8xl font-light tracking-tighter leading-none">27</div>
+            <div class="text-5xl text-white/70 mb-4">°C</div>
+        </div>
+        
+        <div id="weather-desc" class="text-xl capitalize text-white/80 mb-1">Few Clouds</div>
+        <div id="feels-like" class="text-white/70 text-sm">Feels like 29°C</div>
+        
+        <!-- Weather Details -->
+        <div class="grid grid-cols-3 gap-6 mt-12">
+            <!-- Humidity -->
+            <div class="text-center">
+                <i class="fa-solid fa-droplet text-sky-400 text-3xl mb-3"></i>
+                <div class="text-[10px] tracking-widest text-white/50">HUMIDITY</div>
+                <div id="humidity-val" class="text-3xl font-medium mt-1">68</div>
+                <div class="text-xs text-white/50">%</div>
+            </div>
+            <!-- Wind -->
+            <div class="text-center">
+                <i class="fa-solid fa-wind text-sky-400 text-3xl mb-3"></i>
+                <div class="text-[10px] tracking-widest text-white/50">WIND</div>
+                <div id="wind-val" class="text-3xl font-medium mt-1">4.2</div>
+                <div class="text-xs text-white/50">m/s</div>
+            </div>
+            <!-- Pressure -->
+            <div class="text-center">
+                <i class="fa-solid fa-gauge-high text-sky-400 text-3xl mb-3"></i>
+                <div class="text-[10px] tracking-widest text-white/50">PRESSURE</div>
+                <div id="pressure-val" class="text-3xl font-medium mt-1">1012</div>
+                <div class="text-xs text-white/50">hPa</div>
+            </div>
+        </div>
+        
+        <div class="mt-10 text-center text-[10px] text-white/40 border-t border-white/10 pt-6">
+            Click on the map or search • OpenWeatherMap API
+        </div>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black/70 z-[999] flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-14 h-14 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
+            <p class="mt-6 text-sm tracking-[3px] text-white/60">LOADING WEATHER...</p>
+        </div>
+    </div>
+    
+    <!-- Error Toast -->
+    <div id="error-toast" 
+         class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-red-600/90 text-white px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-4 z-[999]">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="error-message" class="text-sm"></span>
+    </div>
 
-<header>🇱🇰 Sri Lanka 3D News Portal</header>
-
-<center><div class="section-title">English News</div></center>
-
-<div class="container">
-<script src="//rss.bloople.net/?url=https%3A%2F%2Flankanewsweb.net%2Ffeed&showtitle=false&type=js"></script>
-<script src="//rss.bloople.net/?url=https%3A%2F%2Fwww.slmirror.com%2Ffeed&showtitle=false&type=js"></script>
-</div>
-
-<center><div class="section-title">සිංහල පුවත්</div></center>
-
-<div class="container">
-<script src="//rss.bloople.net/?url=https%3A%2F%2Freadme.lk%2Ffeed&showtitle=false&type=js"></script>
-<script src="//rss.bloople.net/?url=https%3A%2F%2Ftecroom.lk%2Ffeed&showtitle=false&type=js"></script>
-<script src="//rss.bloople.net/?url=https%3A%2F%2Fvikalpa.org%2Ffeed&showtitle=false&type=js"></script>
-</div>
-
-<footer>
-© 2026 SL 3D News Channel | Live RSS Powered
-</footer>
-
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ==================== IMPORTANT: PASTE YOUR API KEY HERE ====================
+        // Step 1: https://openweathermap.org/api යන්නට ගොස් free account එකක් හදාගන්න
+        // Step 2: My API Keys section එකේ නව key එකක් copy කරගන්න
+        // Step 3: පහත තියෙන 'YOUR_OPENWEATHERMAP_API_KEY_HERE' මේක replace කරන්න
+        const API_KEY = 'a711d55b1e89708be65819eb07c0eeba';
+        // ===========================================================================
+        
+        let map;
+        let currentWeatherData = null;
+        
+        // Tailwind initialization (not required but safe)
+        function initTailwind() {
+            // Tailwind CDN automatically works
+        }
+        
+        // Show loading
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+        
+        // Show error toast
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            document.getElementById('error-message').textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4500);
+        }
+        
+        // ==================== RAIN ANIMATION ====================
+        function createRain() {
+            const container = document.getElementById('rain-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 180; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'drop';
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.animationDuration = (Math.random() * 0.6 + 0.35) + 's';
+                drop.style.animationDelay = '-' + Math.random() * 2 + 's';
+                drop.style.height = (Math.random() * 55 + 35) + 'px';
+                drop.style.opacity = Math.random() * 0.6 + 0.4;
+                container.appendChild(drop);
+            }
+        }
+        
+        function showRain() {
+            hideAllAnimations();
+            const container = document.getElementById('rain-container');
+            container.classList.remove('hidden');
+            if (container.children.length === 0) createRain();
+        }
+        
+        // ==================== CLOUDS ANIMATION ====================
+        function createClouds() {
+            const container = document.getElementById('clouds-container');
+            container.innerHTML = '';
+            const emojis = ['☁️', '☁️', '🌥️', '☁️'];
+            for (let i = 0; i < 7; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                cloud.textContent = emojis[i % emojis.length];
+                cloud.style.top = (15 + Math.random() * 45) + 'vh';
+                cloud.style.animationDuration = (45 + Math.random() * 35) + 's';
+                cloud.style.animationDelay = '-' + Math.random() * 40 + 's';
+                cloud.style.fontSize = (110 + Math.random() * 70) + 'px';
+                container.appendChild(cloud);
+            }
+        }
+        
+        function showClouds() {
+            hideAllAnimations();
+            const container = document.getElementById('clouds-container');
+            container.classList.remove('hidden');
+            if (container.children.length === 0) createClouds();
+        }
+        
+        // ==================== STARS ANIMATION (Night) ====================
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 280; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3.5 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = Math.random() * 75 + 'vh';
+                star.style.animationDuration = (1.2 + Math.random() * 2) + 's';
+                container.appendChild(star);
+            }
+        }
+        
+        function showStars() {
+            hideAllAnimations();
+            const container = document.getElementById('stars-container');
+            container.classList.remove('hidden');
+            if (container.children.length === 0) createStars();
+        }
+        
+        function hideAllAnimations() {
+            document.getElementById('rain-container').classList.add('hidden');
+            document.getElementById('clouds-container').classList.add('hidden');
+            document.getElementById('stars-container').classList.add('hidden');
+        }
+        
+        // Apply correct animation based on weather
+        function applyDynamicAnimations(mainCondition, iconCode) {
+            const isNight = iconCode.endsWith('n');
+            
+            if (mainCondition === 'Rain' || mainCondition === 'Drizzle' || mainCondition === 'Thunderstorm') {
+                showRain();
+            } else if (mainCondition === 'Clouds') {
+                showClouds();
+            } else if (mainCondition === 'Clear') {
+                if (isNight) {
+                    showStars();
+                } else {
+                    // Sunny glow on icon
+                    const icon = document.getElementById('weather-icon');
+                    icon.classList.add('sunny-glow');
+                    setTimeout(() => icon.classList.remove('sunny-glow'), 7000);
+                }
+            }
+            // Snow, Mist etc. ඕන නම් එකතු කරන්න පුළුවන්
+        }
+        
+        // Update Weather Card
+        function updateUI(data) {
+            currentWeatherData = data;
+            
+            // City
+            document.getElementById('city-name').innerHTML = `${data.name} <span class="text-sm font-normal text-white/60">, ${data.sys.country}</span>`;
+            
+            // Temperature
+            document.getElementById('temperature').textContent = Math.round(data.main.temp);
+            
+            // Description
+            const desc = data.weather[0].description;
+            document.getElementById('weather-desc').textContent = desc.charAt(0).toUpperCase() + desc.slice(1);
+            
+            // Feels like
+            document.getElementById('feels-like').textContent = `Feels like ${Math.round(data.main.feels_like)}°C`;
+            
+            // Icon
+            const iconUrl = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
+            document.getElementById('weather-icon').src = iconUrl;
+            
+            // Details
+            document.getElementById('humidity-val').textContent = data.main.humidity;
+            document.getElementById('wind-val').textContent = data.wind.speed.toFixed(1);
+            document.getElementById('pressure-val').textContent = data.main.pressure;
+            
+            // Date
+            const dateEl = document.getElementById('current-date');
+            const now = new Date();
+            const options = { weekday: 'short', month: 'long', day: 'numeric' };
+            dateEl.textContent = now.toLocaleDateString('en-US', options);
+            
+            // Dynamic animations
+            applyDynamicAnimations(data.weather[0].main, data.weather[0].icon);
+            
+            // Make card visible with animation
+            const card = document.getElementById('weather-card');
+            card.classList.remove('opacity-0');
+        }
+        
+        // Fetch weather (city or coordinates)
+        async function fetchWeather(lat = null, lon = null, city = null) {
+            if (API_KEY === 'YOUR_OPENWEATHERMAP_API_KEY_HERE') {
+                showError('API Key එක paste කරන්න! කේතයේ තියෙන තැනට ඔබේ key එක දාන්න.');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                let url = `https://api.openweathermap.org/data/2.5/weather?appid=${API_KEY}&units=metric`;
+                
+                if (city) {
+                    url += `&q=${encodeURIComponent(city)}`;
+                } else if (lat && lon) {
+                    url += `&lat=${lat}&lon=${lon}`;
+                }
+                
+                const res = await fetch(url);
+                
+                if (!res.ok) {
+                    if (res.status === 404) throw new Error('නගරය හමු නොවුණා. නම නිවැරදිදැයි බලන්න.');
+                    throw new Error('API වල ගැටළුවක් තියෙනවා. API key එක check කරන්න.');
+                }
+                
+                const data = await res.json();
+                updateUI(data);
+                hideLoading();
+            } catch (err) {
+                hideLoading();
+                showError(err.message);
+            }
+        }
+        
+        // Map click handler
+        function onMapClick(e) {
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+            fetchWeather(lat, lon);
+        }
+        
+        // Initialize Leaflet Map (centered on Badulla)
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([6.9934, 81.055], 9); // Badulla coordinates
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Click on any place
+            map.on('click', onMapClick);
+        }
+        
+        // Search form
+        function setupSearch() {
+            const form = document.getElementById('search-form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const input = document.getElementById('search-input');
+                const city = input.value.trim();
+                if (city.length > 2) {
+                    fetchWeather(null, null, city);
+                    input.value = '';
+                }
+            });
+        }
+        
+        // Browser Geolocation (My Location button)
+        function getUserLocation() {
+            if (!navigator.geolocation) {
+                showError('ඔබේ browser එකේ location support නැහැ.');
+                return;
+            }
+            showLoading();
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    fetchWeather(pos.coords.latitude, pos.coords.longitude);
+                },
+                () => {
+                    hideLoading();
+                    showError('Location permission දෙන්න පුළුවන් නැහැ.');
+                }
+            );
+        }
+        
+        // Page load කරනකොට run වෙන function
+        window.onload = function() {
+            initTailwind();
+            initMap();
+            setupSearch();
+            
+            // Default: Badulla weather load වෙනවා
+            fetchWeather(6.9934, 81.055);
+            
+            // Card එක smooth පෙන්වන්න
+            setTimeout(() => {
+                document.getElementById('weather-card').classList.add('weather-card');
+            }, 1200);
+            
+            // Helpful message once
+            console.log('%c✅ Weatherly successfully loaded! API key paste කළාද? Map එකේ ඕනෑම තැනක click කරන්න.', 'color:#22c55e; font-size:13px');
+        };
+    </script>
 </body>
 </html>
