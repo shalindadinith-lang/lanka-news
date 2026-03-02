@@ -7,168 +7,286 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+   
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
-        
-        :root { --primary: #3b82f6; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: #0f172a; color: white; overflow: hidden; height: 100vh; }
-        .title-font { font-family: 'Space Grotesk', sans-serif; }
-        
-        /* Background & Map Visibility */
+       
+        :root {
+            --primary: #3b82f6;
+        }
+       
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #1e3a8a; /* Deep Blue Background */
+        }
+       
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+       
+        /* Animated Gradient Background - Blue Theme */
         #bg {
-            background: linear-gradient(135deg, #1e2937, #0f172a, #1e3a8a);
+            background: linear-gradient(135deg, #1e3a8a, #1e40af, #3b82f6, #1d4ed8);
             background-size: 400% 400%;
             animation: gradientShift 25s ease infinite;
         }
+       
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        /* Glassmorphism - Text Visibility Optimized */
+       
+        /* Glassmorphism Card - High Visibility */
         .glass {
-            background: rgba(15, 23, 42, 0.85); /* Dark enough for white text to pop */
+            background: rgba(15, 23, 42, 0.8); 
             backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
         }
-
-        #map { filter: brightness(0.6) contrast(1.1); }
-
-        /* Animation Layers */
-        .weather-layer { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-        
-        /* Rain & Snow Styling */
-        .drop { position: absolute; width: 2px; background: linear-gradient(transparent, #60a5fa); animation: fall linear infinite; }
-        .snowflake { position: absolute; background: white; border-radius: 50%; box-shadow: 0 0 8px #fff; animation: snowFall linear infinite; }
-        @keyframes fall { to { transform: translateY(110vh); } }
-        @keyframes snowFall { to { transform: translateY(110vh) rotate(360deg); } }
-
-        /* Lightning */
-        @keyframes lightning { 0%, 90% { opacity: 0; } 92% { opacity: 0.6; } 94% { opacity: 0; } 100% { opacity: 0; } }
-        .lightning-flash { position: fixed; inset: 0; background: white; opacity: 0; animation: lightning 5s infinite; z-index: 11; }
-
-        /* Text readability shadow */
-        .text-glow { text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+       
+        /* Map Styling - Clean & Bright */
+        #map {
+            filter: saturate(1.2) brightness(0.9);
+        }
+       
+        /* Rain Animation */
+        @keyframes fall {
+            to { transform: translateY(120vh); }
+        }
+        .drop {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(transparent, #93c5fd);
+            box-shadow: 0 0 8px #60a5fa;
+            animation: fall linear infinite;
+        }
+       
+        /* Snow Animation */
+        @keyframes snowFall {
+            to { transform: translateY(120vh) rotate(360deg); }
+        }
+        .snowflake {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #fff;
+            animation: snowFall linear infinite;
+        }
+       
+        /* Lightning Flash */
+        @keyframes lightning {
+            0%, 90% { opacity: 0; }
+            92% { opacity: 0.8; }
+            94% { opacity: 0; }
+            96% { opacity: 0.6; }
+            100% { opacity: 0; }
+        }
+        .lightning-flash {
+            position: absolute;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            animation: lightning 5s infinite;
+            pointer-events: none;
+        }
+       
+        /* Fog Animation */
+        @keyframes fogDrift {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(100vw); }
+        }
+        .fog-layer {
+            position: absolute;
+            width: 200vw;
+            height: 100vh;
+            background: linear-gradient(transparent, rgba(255,255,255,0.2), transparent);
+            filter: blur(50px);
+            animation: fogDrift 60s linear infinite;
+        }
+       
+        /* Cloud Animation */
+        @keyframes drift {
+            from { transform: translateX(-200%); }
+            to { transform: translateX(250vw); }
+        }
+        .cloud {
+            position: absolute;
+            font-size: 140px;
+            opacity: 0.5;
+            filter: blur(2px);
+            animation: drift linear infinite;
+        }
+       
+        /* Stars Animation */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff;
+            animation: twinkle 2s infinite alternate ease-in-out;
+        }
+       
+        /* Fade-in Animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .weather-card {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+       
+        /* Forecast Carousel */
+        .forecast-item {
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
     </style>
 </head>
-<body class="relative">
-    
+<body class="text-white overflow-hidden h-screen relative">
+   
     <div id="bg" class="fixed inset-0 z-[-1]"></div>
+   
     <div id="map" class="fixed inset-0 z-0"></div>
-    <div id="weather-animations" class="weather-layer"></div>
-    <div id="lightning-container" class="hidden"> <div class="lightning-flash"></div> </div>
-
-    <header class="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-cloud-sun text-4xl text-sky-400"></i>
+   
+    <div id="rain-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    <div id="snow-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    <div id="lightning-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    <div id="fog-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
+    <div id="clouds-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
+    <div id="stars-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+   
+    <header class="fixed top-0 left-0 right-0 z-50 bg-blue-900/60 backdrop-blur-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <i class="fa-solid fa-cloud-sun text-4xl text-sky-300"></i>
                 <div>
-                    <h1 class="title-font text-2xl font-bold tracking-tight">Weatherly</h1>
-                    <p class="text-[10px] text-sky-400 font-bold tracking-widest uppercase">Live Dashboard</p>
+                    <h1 class="title-font text-3xl font-semibold tracking-tighter">Weatherly</h1>
+                    <p class="text-[10px] text-sky-200 -mt-1 tracking-[2px]">LIVE MAP</p>
                 </div>
             </div>
-
+           
             <form id="search-form" class="flex-1 max-w-md mx-8">
                 <div class="relative group">
-                    <input id="search-input" type="text" placeholder="නගරයේ නම ඇතුළත් කරන්න..." 
-                        class="w-full bg-white/10 border border-white/20 focus:border-sky-400 transition-all rounded-2xl px-6 py-3 pl-12 text-sm text-white placeholder:text-white/50 focus:outline-none">
-                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-white/40"></i>
+                    <input id="search-input"
+                           type="text"
+                           placeholder="නගරයක් සොයන්න..."
+                           class="w-full bg-white/10 border border-white/30 focus:border-sky-400 transition-all rounded-3xl px-6 py-4 pl-14 text-sm placeholder:text-white/60 focus:outline-none">
+                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-white/60 text-lg"></i>
                 </div>
             </form>
-
-            <button onclick="getUserLocation()" class="bg-sky-600 hover:bg-sky-500 transition-all px-5 py-3 rounded-2xl text-sm font-bold flex items-center gap-2">
+           
+            <button onclick="getUserLocation()"
+                    class="flex items-center gap-3 bg-blue-600 hover:bg-blue-500 transition-all px-6 py-4 rounded-3xl text-sm font-medium shadow-lg">
                 <i class="fa-solid fa-location-dot"></i>
                 <span class="hidden md:block">මගේ ස්ථානය</span>
             </button>
         </div>
     </header>
-
-    <div id="weather-card" class="glass fixed top-28 left-6 md:left-8 w-full max-w-[400px] rounded-[2rem] p-8 z-50 opacity-0 overflow-y-auto max-h-[82vh] custom-scroll transition-all duration-700">
-        
-        <div class="flex justify-between items-start mb-6">
+   
+    <div id="weather-card"
+         class="glass fixed top-28 left-6 md:left-8 w-full max-w-[380px] rounded-3xl p-8 z-50 weather-card opacity-0 overflow-y-auto max-h-[80vh] scrollbar-hide">
+       
+        <div class="flex justify-between items-start mb-8">
             <div>
-                <h2 id="city-name" class="text-3xl font-bold tracking-tight text-glow">Search City</h2>
-                <p id="current-date" class="text-sky-400 text-xs font-bold uppercase tracking-wider mt-1">Ready to Sync</p>
+                <div id="city-name" class="text-3xl font-semibold title-font tracking-tight">Badulla, LK</div>
+                <div id="current-date" class="text-white/60 text-sm mt-1">Today • March 02, 2026</div>
             </div>
-            <img id="weather-icon" src="" class="w-24 h-24 -mt-4 drop-shadow-2xl">
+            <img id="weather-icon" src="https://openweathermap.org/img/wn/02d@4x.png" alt="Weather Icon" class="w-24 h-24 -mt-4 transition-all">
         </div>
-
-        <div class="flex items-baseline gap-2 mb-2">
-            <span id="temperature" class="text-8xl font-bold tracking-tighter leading-none text-glow">--</span>
-            <span class="text-4xl font-light text-sky-400">°C</span>
+       
+        <div class="flex items-end gap-2 mb-2">
+            <div id="temperature" class="text-8xl font-light tracking-tighter leading-none">--</div>
+            <div class="text-5xl text-sky-400 mb-4">°C</div>
         </div>
-        
-        <div id="weather-desc" class="text-xl font-medium text-white/90 capitalize italic mb-1">---</div>
-        <div id="feels-like" class="text-white/60 text-sm mb-6 font-medium">Feels like --°C</div>
-
-        <div class="p-5 bg-sky-500/10 border border-sky-500/20 rounded-2xl mb-8">
-            <h3 class="text-sm font-bold text-sky-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-bolt"></i> AI Insight
-            </h3>
-            <p id="ai-insight" class="text-sm text-white/80 leading-relaxed font-medium">නගරයක් සෙවීමෙන් පසුව උපදෙස් මෙහි දිස්වේ.</p>
+       
+        <div id="weather-desc" class="text-xl capitalize text-white/80 mb-1 italic">Weather Condition</div>
+        <div id="feels-like" class="text-white/70 text-sm">Feels like --°C</div>
+       
+        <div class="mt-6 p-4 bg-white/10 rounded-2xl border border-white/5">
+            <h3 class="text-sm font-bold text-sky-300 mb-2 uppercase tracking-widest">AI Insight</h3>
+            <p id="ai-insight" class="text-sm text-white/90 leading-relaxed"></p>
         </div>
-
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
-                <i class="fa-solid fa-droplet text-sky-400 text-lg mb-2"></i>
-                <div class="text-[9px] text-white/40 font-bold uppercase">Humidity</div>
-                <div class="text-lg font-bold"><span id="humidity-val">--</span>%</div>
+       
+        <div class="grid grid-cols-3 gap-6 mt-6">
+            <div class="text-center">
+                <i class="fa-solid fa-sun text-yellow-400 text-2xl mb-2"></i>
+                <div class="text-[9px] tracking-widest text-white/50 uppercase">Sunrise</div>
+                <div id="sunrise-val" class="text-xl font-medium mt-1">--:--</div>
             </div>
-            <div class="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
-                <i class="fa-solid fa-wind text-sky-400 text-lg mb-2"></i>
-                <div class="text-[9px] text-white/40 font-bold uppercase">Wind</div>
-                <div class="text-lg font-bold"><span id="wind-val">--</span><span class="text-[10px] ml-1">m/s</span></div>
+            <div class="text-center">
+                <i class="fa-solid fa-moon text-blue-300 text-2xl mb-2"></i>
+                <div class="text-[9px] tracking-widest text-white/50 uppercase">Sunset</div>
+                <div id="sunset-val" class="text-xl font-medium mt-1">--:--</div>
             </div>
-            <div class="text-center p-3 bg-white/5 rounded-2xl border border-white/5">
-                <i class="fa-solid fa-eye text-sky-400 text-lg mb-2"></i>
-                <div class="text-[9px] text-white/40 font-bold uppercase">Visibility</div>
-                <div class="text-lg font-bold"><span id="visibility-val">--</span><span class="text-[10px] ml-1">km</span></div>
+            <div class="text-center">
+                <i class="fa-solid fa-eye text-sky-400 text-2xl mb-2"></i>
+                <div class="text-[9px] tracking-widest text-white/50 uppercase">Visibility</div>
+                <div id="visibility-val" class="text-xl font-medium mt-1">--</div>
             </div>
         </div>
-
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl">
-                <i class="fa-solid fa-sun text-yellow-500 text-2xl"></i>
-                <div>
-                    <div class="text-[9px] text-white/40 font-bold uppercase">Sunrise</div>
-                    <div id="sunrise-val" class="text-sm font-bold">--:--</div>
-                </div>
+       
+        <div class="grid grid-cols-3 gap-6 mt-6">
+            <div class="text-center">
+                <i class="fa-solid fa-droplet text-sky-400 text-2xl mb-2"></i>
+                <div class="text-[9px] tracking-widest text-white/50 uppercase">Humidity</div>
+                <div id="humidity-val" class="text-2xl font-medium mt-1">--</div>
             </div>
-            <div class="flex items-center gap-3 p-4 bg-white/5 rounded-2xl">
-                <i class="fa-solid fa-moon text-sky-300 text-2xl"></i>
-                <div>
-                    <div class="text-[9px] text-white/40 font-bold uppercase">Sunset</div>
-                    <div id="sunset-val" class="text-sm font-bold">--:--</div>
-                </div>
+            <div class="text-center">
+                <i class="fa-solid fa-wind text-sky-400 text-2xl mb-2"></i>
+                <div class="text-[9px] tracking-widest text-white/50 uppercase">Wind</div>
+                <div id="wind-val" class="text-2xl font-medium mt-1">--</div>
+            </div>
+            <div class="text-center">
+                <i class="fa-solid fa-gauge-high text-sky-400 text-2xl mb-2"></i>
+                <div class="text-[9px] tracking-widest text-white/50 uppercase">Pressure</div>
+                <div id="pressure-val" class="text-xl font-medium mt-1">--</div>
             </div>
         </div>
-
-        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-4 ml-1">24-Hour Timeline</h3>
-        <div id="hourly-forecast" class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide"></div>
-        
-        <div class="mt-8 text-center text-[10px] text-white/30 border-t border-white/5 pt-6">
-            LIVE SATELLITE DATA • OPENWEATHER API
+       
+        <div class="mt-10">
+            <h3 class="text-lg font-semibold mb-4 text-sky-300">Hourly Forecast</h3>
+            <div id="hourly-forecast" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide"></div>
+        </div>
+       
+        <div class="mt-10">
+            <h3 class="text-lg font-semibold mb-4 text-sky-300">5-Day Forecast</h3>
+            <div id="daily-forecast" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide"></div>
+        </div>
+       
+        <div class="mt-10 text-center text-[10px] text-white/40 border-t border-white/10 pt-6">
+            Click on the map or search • OpenWeatherMap API
         </div>
     </div>
-
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-950/90 z-[999] flex flex-col items-center justify-center">
-        <div class="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-        <p class="mt-4 text-[10px] font-bold tracking-[0.4em] text-sky-500 uppercase">Fetching Weather Data</p>
+   
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-blue-950/80 z-[999] flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-14 h-14 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
+            <p class="mt-6 text-sm tracking-[3px] text-white/60">FETCHING DATA...</p>
+        </div>
     </div>
-
+   
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   
     <script>
         const API_KEY = 'a711d55b1e89708be65819eb07c0eeba';
         let map;
 
+        // Initialize Map with a cleaner tile style
         function initMap() {
-            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([7.8731, 80.7718], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+            map = L.map('map', { zoomControl: false }).setView([7.8731, 80.7718], 8);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
             map.on('click', (e) => fetchWeather(e.latlng.lat, e.latlng.lng));
         }
 
@@ -179,87 +297,91 @@
                     `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${API_KEY}` :
                     `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
                 
-                const res = await fetch(url);
-                const data = await res.json();
+                const response = await fetch(url);
+                const data = await response.json();
 
                 const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${data.coord.lat}&lon=${data.coord.lon}&units=metric&appid=${API_KEY}`);
                 const forecastData = await forecastRes.json();
 
                 updateUI(data, forecastData);
-                map.flyTo([data.coord.lat, data.coord.lon], 11, { duration: 2 });
-                applyWeatherAnimations(data.weather[0].main, data.weather[0].icon);
+                map.flyTo([data.coord.lat, data.coord.lon], 11);
+                applyAnimations(data.weather[0].main, data.weather[0].icon);
             } catch (err) {
-                alert("නගරය සොයාගත නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.");
+                console.error(err);
             } finally {
                 document.getElementById('loading-overlay').classList.add('hidden');
             }
         }
 
         function updateUI(data, forecast) {
-            const card = document.getElementById('weather-card');
-            card.classList.remove('opacity-0');
-            
-            document.getElementById('city-name').innerText = `${data.name}, ${data.sys.country}`;
-            document.getElementById('temperature').innerText = Math.round(data.main.temp);
-            document.getElementById('weather-desc').innerText = data.weather[0].description;
-            document.getElementById('humidity-val').innerText = data.main.humidity;
-            document.getElementById('wind-val').innerText = data.wind.speed;
-            document.getElementById('visibility-val').innerText = (data.visibility / 1000).toFixed(1);
-            document.getElementById('feels-like').innerText = `Feels like ${Math.round(data.main.feels_like)}°C`;
+            document.getElementById('weather-card').classList.remove('opacity-0');
+            document.getElementById('city-name').innerHTML = `${data.name}, ${data.sys.country}`;
+            document.getElementById('temperature').textContent = Math.round(data.main.temp);
+            document.getElementById('weather-desc').textContent = data.weather[0].description;
+            document.getElementById('feels-like').textContent = `Feels like ${Math.round(data.main.feels_like)}°C`;
+            document.getElementById('humidity-val').textContent = data.main.humidity + "%";
+            document.getElementById('wind-val').textContent = data.wind.speed + " m/s";
+            document.getElementById('pressure-val').textContent = data.main.pressure + " hPa";
+            document.getElementById('visibility-val').textContent = (data.visibility / 1000).toFixed(1) + " km";
             document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
             
-            document.getElementById('sunrise-val').innerText = new Date(data.sys.sunrise * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('sunset-val').innerText = new Date(data.sys.sunset * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('si-LK', { weekday: 'long', month: 'long', day: 'numeric' });
+            document.getElementById('sunrise-val').textContent = new Date(data.sys.sunrise * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('sunset-val').textContent = new Date(data.sys.sunset * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            // AI Logic
+            // AI Insight Logic
             let insight = "";
-            const condition = data.weather[0].main;
-            if(condition === 'Rain') insight = "අද වැසි සහිත කාලගුණයකි. පිටතට යන විට කුඩයක් හෝ වැහි කබායක් අමතක නොකරන්න.";
-            else if(data.main.temp > 30) insight = "අධික උණුසුම් කාලගුණයක් පවතින බැවින් වැඩිපුර ජලය පානය කරන්න.";
-            else insight = "කාලගුණය ඉතා යහපත්. එළිමහන් වැඩකටයුතු සඳහා මෙය කදිම දවසකි.";
-            document.getElementById('ai-insight').innerText = insight;
+            const cond = data.weather[0].main;
+            if(cond === 'Rain') insight = "වැසි සහිත කාලගුණයකි. කුඩයක් අමතක නොකරන්න.";
+            else if(data.main.temp > 30) insight = "අධික උණුසුම් දිනයකි, වැඩිපුර ජලය පානය කරන්න.";
+            else insight = "කාලගුණය යහපත් ය, එළිමහන් කටයුතු වලට සුදුසු දවසකි.";
+            document.getElementById('ai-insight').textContent = insight;
 
+            // Hourly
             const hourlyContainer = document.getElementById('hourly-forecast');
             hourlyContainer.innerHTML = '';
-            forecast.list.slice(0, 10).forEach(item => {
-                const hour = new Date(item.dt * 1000).getHours();
+            forecast.list.slice(0, 8).forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'min-w-[90px] bg-white/5 border border-white/10 rounded-2xl p-4 text-center';
+                div.className = 'forecast-item bg-white/10 rounded-2xl p-4 text-center border border-white/5';
                 div.innerHTML = `
-                    <p class="text-[10px] text-white/40 font-bold">${hour}:00</p>
-                    <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" class="w-10 h-10 mx-auto">
-                    <p class="text-sm font-bold">${Math.round(item.main.temp)}°</p>
+                    <div class="text-xs text-white/50">${new Date(item.dt * 1000).getHours()}:00</div>
+                    <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" class="w-10 mx-auto">
+                    <div class="text-lg font-bold">${Math.round(item.main.temp)}°</div>
                 `;
                 hourlyContainer.appendChild(div);
             });
         }
 
-        function applyWeatherAnimations(condition, icon) {
-            const container = document.getElementById('weather-animations');
-            const lightning = document.getElementById('lightning-container');
-            container.innerHTML = '';
-            lightning.classList.add('hidden');
+        function applyAnimations(main, icon) {
+            const layers = ['rain-container', 'snow-container', 'lightning-container', 'fog-container', 'clouds-container', 'stars-container'];
+            layers.forEach(l => document.getElementById(l).classList.add('hidden'));
 
-            if (condition === 'Rain' || condition === 'Drizzle' || condition === 'Thunderstorm') {
+            if (main === 'Rain' || main === 'Drizzle') {
+                const rc = document.getElementById('rain-container');
+                rc.classList.remove('hidden');
+                rc.innerHTML = '';
                 for(let i=0; i<80; i++) {
                     const drop = document.createElement('div');
                     drop.className = 'drop';
                     drop.style.left = Math.random() * 100 + 'vw';
-                    drop.style.height = (Math.random() * 30 + 30) + 'px';
-                    drop.style.animationDuration = (Math.random() * 0.4 + 0.3) + 's';
+                    drop.style.animationDuration = (Math.random() * 0.5 + 0.3) + 's';
                     drop.style.animationDelay = Math.random() * 2 + 's';
-                    container.appendChild(drop);
+                    rc.appendChild(drop);
                 }
-                if(condition === 'Thunderstorm') lightning.classList.remove('hidden');
-            } else if (condition === 'Snow') {
-                for(let i=0; i<100; i++) {
-                    const flake = document.createElement('div');
-                    flake.className = 'snowflake';
-                    flake.style.width = flake.style.height = Math.random() * 4 + 2 + 'px';
-                    flake.style.left = Math.random() * 100 + 'vw';
-                    flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                    container.appendChild(flake);
+            } else if (main === 'Thunderstorm') {
+                document.getElementById('rain-container').classList.remove('hidden');
+                document.getElementById('lightning-container').classList.remove('hidden');
+                document.getElementById('lightning-container').innerHTML = '<div class="lightning-flash"></div>';
+            } else if (icon.endsWith('n')) {
+                document.getElementById('stars-container').classList.remove('hidden');
+                const sc = document.getElementById('stars-container');
+                sc.innerHTML = '';
+                for(let i=0; i<50; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + 'vw';
+                    star.style.top = Math.random() * 100 + 'vh';
+                    star.style.width = star.style.height = Math.random() * 3 + 'px';
+                    sc.appendChild(star);
                 }
             }
         }
@@ -271,9 +393,7 @@
         });
 
         function getUserLocation() {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                fetchWeather(pos.coords.latitude, pos.coords.longitude);
-            }, () => alert("Location ලබා ගැනීමට අවසර ලබා දෙන්න."));
+            navigator.geolocation.getCurrentPosition(p => fetchWeather(p.coords.latitude, p.coords.longitude));
         }
 
         window.onload = initMap;
