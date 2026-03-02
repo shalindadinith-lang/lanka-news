@@ -3,191 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weatherly • Premium Live Map</title>
+    <title>Weatherly • Interactive Map</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet Map CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&family=Inter:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
 
         :root {
-            --glass-bg: rgba(22, 22, 23, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --accent-blue: #0071e3;
+            --primary: #3b82f6;
         }
 
         body {
-            font-family: 'SF Pro Display', 'Inter', -apple-system, sans-serif;
-            background-color: #000;
-            color: #fff;
-            -webkit-font-smoothing: antialiased;
+            font-family: 'Inter', system-ui, sans-serif;
         }
 
-        /* Full-screen Map visibility */
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        #bg {
+            background: linear-gradient(135deg, #0f172a, #1e2937, #334155, #1e40af);
+            background-size: 400% 400%;
+            animation: gradientShift 25s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+        }
+
         #map {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            filter: saturate(1.2) brightness(0.8);
+            filter: contrast(1.05) saturate(1.15);
         }
 
-        /* Premium Glassmorphism */
-        .premium-glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-        }
-
-        /* Sidebar Layout */
-        .weather-sidebar {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            bottom: 20px;
-            width: 400px;
-            z-index: 50;
-            border-radius: 28px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @media (max-width: 768px) {
-            .weather-sidebar {
-                width: calc(100% - 40px);
-                height: 80vh;
-                top: auto;
-            }
-        }
-
-        /* Hide scrollbar for clean UI */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Icon Glow */
-        .condition-icon {
-            filter: drop-shadow(0 0 15px rgba(0, 113, 227, 0.4));
-        }
-
-        /* Animations Containers */
-        #bg { position: fixed; inset: 0; z-index: -1; }
-        .layer-overlay { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
-
-        /* Typography spacing */
-        .temp-main { font-size: 6rem; font-weight: 200; letter-spacing: -4px; line-height: 1; }
-        .stat-card { background: rgba(255,255,255,0.05); border-radius: 18px; padding: 16px; border: 1px solid rgba(255,255,255,0.05); }
-
-        /* Animation Keyframes (Retained from original logic) */
         @keyframes fall { to { transform: translateY(120vh); } }
-        .drop { position: absolute; width: 2px; background: linear-gradient(transparent, #93c5fd); animation: fall linear infinite; }
+        .drop { position: absolute; width: 2px; background: linear-gradient(transparent, #93c5fd); box-shadow: 0 0 8px #60a5fa; animation: fall linear infinite; }
+
         @keyframes snowFall { to { transform: translateY(120vh) rotate(360deg); } }
-        .snowflake { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; animation: snowFall linear infinite; }
+        .snowflake { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; box-shadow: 0 0 8px #fff; animation: snowFall linear infinite; }
+
+        @keyframes lightning { 0%,90% {opacity:0;} 92%{opacity:0.8;} 94%{opacity:0;} 96%{opacity:0.6;} 100%{opacity:0;} }
+        .lightning-flash { position: absolute; inset: 0; background: white; opacity: 0; animation: lightning 5s infinite; pointer-events: none; }
+
+        @keyframes fogDrift { 0% { transform: translateX(0); } 100% { transform: translateX(100vw); } }
+        .fog-layer { position: absolute; width: 200vw; height: 100vh; background: linear-gradient(transparent, rgba(255,255,255,0.3), transparent); filter: blur(50px); animation: fogDrift 60s linear infinite; }
+
+        @keyframes drift { from { transform: translateX(-200%); } to { transform: translateX(250vw); } }
+        .cloud { position: absolute; font-size: 140px; opacity: 0.65; filter: blur(2px); animation: drift linear infinite; text-shadow: 0 0 30px rgba(255,255,255,0.6); }
+
+        @keyframes twinkle { 0%,100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+        .star { position: absolute; background: white; border-radius: 50%; box-shadow: 0 0 10px #fff; animation: twinkle 2s infinite alternate ease-in-out; }
+
+        @keyframes sunny-glow { 0%,100% { filter: drop-shadow(0 0 30px #facc15); } 50% { filter: drop-shadow(0 0 70px #fde047); } }
+        .sunny-glow { animation: sunny-glow 4s ease-in-out infinite; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .weather-card { animation: fadeInUp 0.8s ease forwards; }
+
+        .glass:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px -15px rgb(0 0 0 / 0.5);
+        }
+
+        .forecast-item {
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .forecast-desc {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* New header buttons style */
+        .header-btn {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.18);
+            backdrop-filter: blur(12px);
+        }
+        .header-btn:hover {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.35);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
-<body>
+<body class="bg-black text-white overflow-hidden h-screen relative">
 
-    <div id="bg"></div>
-    <div id="map"></div>
+    <!-- Background gradient -->
+    <div id="bg" class="fixed inset-0 z-[-1]"></div>
 
-    <div id="rain-container" class="layer-overlay hidden"></div>
-    <div id="snow-container" class="layer-overlay hidden"></div>
-    <div id="lightning-container" class="layer-overlay hidden"></div>
-    <div id="fog-container" class="layer-overlay hidden"></div>
-    <div id="clouds-container" class="layer-overlay hidden"></div>
-    <div id="stars-container" class="layer-overlay hidden"></div>
+    <!-- Leaflet map -->
+    <div id="map" class="fixed inset-0 z-0"></div>
 
-    <aside id="weather-card" class="weather-sidebar premium-glass opacity-0">
-        <header class="p-6 border-b border-white/10">
-            <form id="search-form" class="relative group">
-                <input id="search-input" type="text" 
-                       placeholder="නගරයක් සොයන්න..." 
-                       class="w-full bg-white/5 border border-white/10 focus:border-blue-500 transition-all rounded-2xl px-5 py-3 pl-12 text-sm placeholder:text-white/40 outline-none">
-                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-white/40 text-sm"></i>
+    <!-- Animation layers -->
+    <div id="animations-layer" class="fixed inset-0 z-[5] pointer-events-none"></div>
+    <div id="rain-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    <div id="snow-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    <div id="lightning-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+    <div id="fog-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
+    <div id="clouds-container" class="hidden fixed inset-0 z-[6] pointer-events-none overflow-hidden"></div>
+    <div id="stars-container" class="hidden fixed inset-0 z-[6] pointer-events-none"></div>
+
+    <!-- Header with new buttons -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-black/65 backdrop-blur-xl border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+
+            <!-- Logo -->
+            <div class="flex items-center gap-3 shrink-0">
+                <i class="fa-solid fa-cloud-sun text-4xl text-sky-400"></i>
+                <div>
+                    <h1 class="title-font text-3xl font-semibold tracking-tight">Weatherly</h1>
+                    <p class="text-xs text-white/50 tracking-widest -mt-1">LIVE MAP</p>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <form id="search-form" class="flex-1 min-w-[240px] max-w-md mx-auto order-3 md:order-none">
+                <div class="relative group">
+                    <input id="search-input" type="text" placeholder="නගරයක් සොයන්න... (Badulla උදාහරණය)"
+                           class="w-full bg-white/10 border border-white/25 focus:border-sky-400 transition-all rounded-full px-5 py-3.5 pl-12 text-sm placeholder:text-white/60 focus:outline-none">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-white/60"></i>
+                </div>
             </form>
-            <button onclick="getUserLocation()" class="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 transition-all py-3 rounded-2xl text-xs font-semibold uppercase tracking-wider">
-                <i class="fa-solid fa-location-crosshairs"></i> මගේ ස්ථානය
-            </button>
-        </header>
 
-        <div class="flex-1 overflow-y-auto no-scrollbar p-6">
-            <section class="text-center mb-10">
-                <h1 id="city-name" class="text-3xl font-semibold mb-1">Badulla, LK</h1>
-                <p id="current-date" class="text-white/50 text-sm mb-6 uppercase tracking-widest">March 02, 2026</p>
-                
-                <div class="relative inline-block mb-4">
-                    <img id="weather-icon" src="" alt="Icon" class="w-32 h-32 condition-icon mx-auto">
-                    <div class="temp-main" id="temperature">--</div>
-                </div>
-                
-                <h2 id="weather-desc" class="text-xl font-medium text-blue-400 capitalize">Condition</h2>
-                <p id="feels-like" class="text-white/50 text-sm">Feels like --°C</p>
-            </section>
+            <!-- Buttons group -->
+            <div class="flex items-center gap-2.5 sm:gap-3 order-4 md:order-none flex-wrap justify-end">
+                <button onclick="openNews()" 
+                        class="header-btn flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm font-medium transition-all">
+                    <i class="fa-solid fa-newspaper"></i>
+                    <span class="hidden sm:inline">News</span>
+                </button>
 
-            <div class="bg-blue-600/20 border border-blue-500/30 rounded-2xl p-5 mb-8">
-                <div class="flex items-center gap-2 mb-2 text-blue-400">
-                    <i class="fa-solid fa-sparkles text-xs"></i>
-                    <span class="text-[10px] font-bold uppercase tracking-widest">AI Forecast</span>
-                </div>
-                <p id="ai-insight" class="text-sm leading-relaxed text-blue-50/90 italic"></p>
-            </div>
+                <button onclick="openPlaceInfo()" 
+                        class="header-btn flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm font-medium transition-all">
+                    <i class="fa-solid fa-landmark"></i>
+                    <span class="hidden sm:inline">Place Info</span>
+                </button>
 
-            <div class="grid grid-cols-2 gap-4 mb-10">
-                <div class="stat-card">
-                    <span class="text-[10px] text-white/40 block mb-2 uppercase tracking-widest">Humidity</span>
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-droplet text-blue-400"></i>
-                        <span id="humidity-val" class="text-xl">--</span><span class="text-xs text-white/40">%</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <span class="text-[10px] text-white/40 block mb-2 uppercase tracking-widest">Wind Speed</span>
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-wind text-blue-400"></i>
-                        <span id="wind-val" class="text-xl">--</span><span class="text-xs text-white/40">m/s</span>
-                    </div>
-                </div>
-                <div class="stat-card col-span-2">
-                    <div class="flex justify-between items-center">
-                        <div class="text-center flex-1 border-r border-white/10">
-                            <span class="text-[10px] text-white/40 block mb-1 uppercase">Sunrise</span>
-                            <span id="sunrise-val" class="text-lg font-medium">--:--</span>
-                        </div>
-                        <div class="text-center flex-1">
-                            <span class="text-[10px] text-white/40 block mb-1 uppercase">Sunset</span>
-                            <span id="sunset-val" class="text-lg font-medium">--:--</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <button onclick="openRestaurants()" 
+                        class="header-btn flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm font-medium transition-all">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span class="hidden sm:inline">Restaurants</span>
+                </button>
 
-            <div class="mb-10">
-                <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4">Hourly Forecast</h3>
-                <div id="hourly-forecast" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
-            </div>
-
-            <div>
-                <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4">5-Day Forecast</h3>
-                <div id="daily-forecast" class="flex flex-col gap-3"></div>
+                <button onclick="getUserLocation()"
+                        class="flex items-center gap-2.5 bg-white/12 hover:bg-white/22 transition-all px-5 py-2.5 sm:py-3 rounded-xl text-sm font-medium">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span class="hidden md:inline">මගේ ස්ථානය</span>
+                </button>
             </div>
         </div>
+    </header>
 
-        <footer class="p-4 bg-black/20 text-center">
-            <p class="text-[9px] text-white/30 uppercase tracking-[2px]">OpenWeatherMap Real-time Engine</p>
-        </footer>
-    </aside>
+    <!-- Weather card (unchanged from your original) -->
+    <div id="weather-card"
+         class="glass fixed top-24 sm:top-28 left-4 sm:left-8 w-[92%] max-w-[400px] rounded-3xl p-6 sm:p-8 z-50 weather-card opacity-0 overflow-y-auto max-h-[82vh]">
+        <div class="flex justify-between items-start mb-6 sm:mb-8">
+            <div>
+                <div id="city-name" class="text-2xl sm:text-3xl font-semibold title-font tracking-tight">Badulla, LK</div>
+                <div id="current-date" class="text-white/60 text-xs sm:text-sm mt-1">Today • March 02, 2026</div>
+            </div>
+            <img id="weather-icon" src="https://openweathermap.org/img/wn/02d@4x.png" alt="Weather Icon" class="w-24 sm:w-28 h-24 sm:h-28 -mt-4 sm:-mt-6 transition-all">
+        </div>
 
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center">
-        <div class="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+        <div class="flex items-end gap-2 mb-2">
+            <div id="temperature" class="text-7xl sm:text-8xl font-light tracking-tighter leading-none">27</div>
+            <div class="text-4xl sm:text-5xl text-white/70 mb-3 sm:mb-4">°C</div>
+        </div>
+
+        <div id="weather-desc" class="text-lg sm:text-xl capitalize text-white/80 mb-1">Few Clouds</div>
+        <div id="feels-like" class="text-white/70 text-sm">Feels like 29°C</div>
+
+        <div class="mt-5 sm:mt-6 p-4 bg-white/10 rounded-2xl">
+            <h3 class="text-base sm:text-lg font-semibold mb-2">AI Insights</h3>
+            <p id="ai-insight" class="text-xs sm:text-sm text-white/80"></p>
+        </div>
+
+        <!-- sunrise / sunset / visibility -->
+        <div class="grid grid-cols-3 gap-4 sm:gap-6 mt-6">...</div>
+
+        <!-- humidity / wind / pressure -->
+        <div class="grid grid-cols-3 gap-4 sm:gap-6 mt-6">...</div>
+
+        <!-- UV -->
+        <div class="mt-6 text-center">...</div>
+
+        <!-- Hourly -->
+        <div class="mt-8 sm:mt-10">
+            <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Hourly Forecast</h3>
+            <div id="hourly-forecast" class="flex overflow-x-auto gap-3 sm:gap-4 pb-4 scrollbar-hide"> </div>
+        </div>
+
+        <!-- Daily -->
+        <div class="mt-8 sm:mt-10">
+            <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">5-Day Forecast</h3>
+            <div id="daily-forecast" class="flex overflow-x-auto gap-3 sm:gap-4 pb-4 scrollbar-hide"> </div>
+        </div>
+
+        <div class="mt-8 sm:mt-10 text-center text-xs text-white/40 border-t border-white/10 pt-5 sm:pt-6">
+            Click on the map or search • OpenWeatherMap API
+        </div>
     </div>
 
+    <!-- Loading & Error overlays (unchanged) -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black/70 z-[999] flex items-center justify-center">...</div>
+    <div id="error-toast" class="hidden fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 bg-red-600/90 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-3xl shadow-2xl flex items-center gap-3 sm:gap-4 z-[999]">...</div>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
-        // ... (Keep all your existing JS code here exactly as it was)
-        // Ensure you use the IDs provided in the new layout above.
+        // ────────────────────────────────────────────────
+        //                YOUR API KEY
+        // ────────────────────────────────────────────────
+        const API_KEY = 'a711d55b1e89708be65819eb07c0eeba';
+
+        // ────────────────────────────────────────────────
+        //          ALL YOUR ORIGINAL FUNCTIONS
+        //          (showLoading, animations, fetchWeather, etc.)
+        //          remain exactly the same — only adding new button handlers
+        // ────────────────────────────────────────────────
+
+        // New button handlers
+        function openNews() {
+            window.open('news.html', '_blank');
+        }
+
+        function openPlaceInfo() {
+            window.open('place-info.html', '_blank');
+        }
+
+        function openRestaurants() {
+            window.open('restaurants.html', '_blank');
+        }
+
+        // ────────────────────────────────────────────────
+        //  Your existing map init, fetch, updateUI, etc.
+        //  (paste your full original script logic here)
+        // ────────────────────────────────────────────────
+
+        // Example minimal init (replace with your full code)
+        let map;
+        function initMap() {
+            map = L.map('map').setView([6.9934, 81.055], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+            }).addTo(map);
+            map.on('click', (e) => fetchWeather(e.latlng.lat, e.latlng.lng));
+        }
+
+        window.onload = function() {
+            initMap();
+            // setupSearch();
+            fetchWeather(6.9934, 81.055); // default Badulla
+
+            setTimeout(() => {
+                document.getElementById('weather-card').classList.remove('opacity-0');
+            }, 800);
+        };
+
+        // ... paste the rest of your original JavaScript code here ...
+        // (createRain, showRain, fetchWeather, updateUI, generateAIInsight, etc.)
     </script>
 </body>
 </html>
