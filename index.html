@@ -3,261 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weatherly Pro • Ultimate Travel & Weather Explorer</title>
+    <title>Weatherly • Premium Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         
-        body { font-family: 'Plus Jakarta Sans', sans-serif; height: 100vh; overflow: hidden; background: #0f172a; }
+        :root {
+            --glass: rgba(15, 23, 42, 0.75);
+            --border: rgba(255, 255, 255, 0.12);
+        }
 
-        /* මුලින් තිබූ Premium Glass Look එක */
-        .glass {
-            background: rgba(15, 23, 42, 0.7);
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #020617;
+            color: #f1f5f9;
+        }
+
+        /* පිරිසිදු Glass Effect එකක් */
+        .premium-glass {
+            background: var(--glass);
             backdrop-filter: blur(20px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* සිතියම අඳුරු කර දත්ත පැහැදිලිව පෙන්වීම */
+        #map { 
+            filter: brightness(0.6) contrast(1.1) grayscale(0.2); 
+            z-index: 0;
+        }
+
+        /* දත්ත කොටස් (Cards) සඳහා වන මෘදු Animation */
+        .info-stat {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.25rem;
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .info-stat:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
         }
 
         .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.5); border-radius: 10px; }
-
-        #map { filter: brightness(0.8) contrast(1.2); z-index: 1; }
-
-        /* Animations */
-        @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .animate-side { animation: slideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
-
-        .weather-anim { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
-        .rain-drop { position: absolute; width: 1px; background: #38bdf8; animation: fall linear infinite; }
-        @keyframes fall { to { transform: translateY(100vh); } }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
     </style>
 </head>
-<body class="text-slate-200">
+<body class="h-screen overflow-hidden">
 
     <div id="map" class="fixed inset-0"></div>
-    <div id="weather-layer" class="weather-anim"></div>
 
-    <header class="fixed top-0 left-0 right-0 z-[100] p-5">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div class="glass px-5 py-3 rounded-2xl flex items-center gap-3">
-                <i class="fa-solid fa-cloud-bolt text-sky-400 text-2xl"></i>
-                <span class="font-bold text-xl tracking-tighter">Weatherly Pro</span>
+    <header class="fixed top-0 left-0 right-0 z-50 p-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="premium-glass px-6 py-3 rounded-2xl flex items-center gap-3">
+                <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-cloud-sun text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight uppercase text-sm">Weatherly <span class="text-sky-400 italic">Live</span></h1>
             </div>
-            
-            <form id="search-form" class="flex-1 max-w-lg">
+
+            <form id="search-form" class="flex-1 max-w-md mx-6">
                 <div class="relative group">
-                    <input id="search-input" type="text" placeholder="නගරයක් හෝ සංචාරක ස්ථානයක් සොයන්න..." 
-                        class="w-full glass rounded-2xl px-6 py-4 pl-14 focus:outline-none focus:ring-2 ring-sky-500/50 transition-all">
+                    <input id="search-input" type="text" placeholder="නගරයක් සොයන්න..." 
+                        class="w-full premium-glass rounded-2xl px-6 py-3.5 pl-14 focus:outline-none focus:ring-2 ring-sky-500/50 transition-all placeholder:text-slate-500">
                     <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-400"></i>
                 </div>
             </form>
 
-            <button onclick="useCurrentLocation()" class="glass p-4 rounded-2xl hover:text-sky-400 transition-all active:scale-90">
+            <button onclick="getUserLocation()" class="premium-glass p-4 rounded-2xl hover:text-sky-400 transition-all active:scale-95">
                 <i class="fa-solid fa-location-arrow"></i>
             </button>
         </div>
     </header>
 
-    <aside id="detail-panel" class="fixed top-24 left-6 bottom-6 w-full max-w-[450px] z-[90] glass rounded-[2.5rem] flex flex-col hidden animate-side overflow-hidden">
+    <main id="weather-card" class="fixed top-24 left-8 bottom-8 w-full max-w-[400px] z-40 premium-glass rounded-[2rem] p-8 flex flex-col gap-6 overflow-y-auto custom-scroll">
         
-        <div class="relative h-56 shrink-0">
-            <img id="hero-img" src="" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-            <button onclick="closePanel()" class="absolute top-4 right-4 w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/20 transition-all">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="absolute bottom-4 left-6">
-                <h2 id="place-title" class="text-3xl font-bold text-white">Location Name</h2>
-                <p id="place-date" class="text-sky-300 text-xs font-bold uppercase tracking-widest">March 2, 2026</p>
+        <div class="text-center py-4">
+            <h2 id="city-name" class="text-3xl font-bold tracking-tight mb-1">Badulla, LK</h2>
+            <p id="current-date" class="text-slate-400 text-xs font-medium uppercase tracking-widest">Monday, March 2, 2026</p>
+            
+            <div class="flex items-center justify-center gap-4 mt-6">
+                <img id="weather-icon" src="https://openweathermap.org/img/wn/02d@4x.png" class="w-24 h-24 drop-shadow-2xl">
+                <div>
+                    <span id="temperature" class="text-7xl font-bold tracking-tighter">27</span>
+                    <span class="text-3xl font-light text-sky-400">°C</span>
+                </div>
+            </div>
+            <p id="weather-desc" class="text-lg font-medium text-slate-300 mt-2 capitalize">Few Clouds</p>
+        </div>
+
+        <div class="bg-sky-500/10 border border-sky-500/20 rounded-3xl p-5">
+            <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-sparkles text-sky-400 text-sm"></i>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-sky-400">AI Advice</span>
+            </div>
+            <p id="ai-insight" class="text-sm leading-relaxed text-slate-200">අද දවස එළිමහන් වැඩකටයුතු සඳහා ඉතා සුදුසුයි. උණුසුම ගැන සැලකිලිමත් වන්න.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div class="info-stat">
+                <i class="fa-solid fa-droplet text-sky-400 mb-2"></i>
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Humidity</p>
+                <p class="text-xl font-semibold"><span id="humidity-val">68</span><span class="text-sm font-normal text-slate-500 ml-1">%</span></p>
+            </div>
+            <div class="info-stat">
+                <i class="fa-solid fa-wind text-sky-400 mb-2"></i>
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Wind</p>
+                <p class="text-xl font-semibold"><span id="wind-val">4.2</span><span class="text-sm font-normal text-slate-500 ml-1">m/s</span></p>
+            </div>
+            <div class="info-stat">
+                <i class="fa-solid fa-sun text-yellow-400 mb-2"></i>
+                <p class="text-[10px] text-slate-500 uppercase font-bold">UV Index</p>
+                <p class="text-xl font-semibold" id="uv-val">Low</p>
+            </div>
+            <div class="info-stat">
+                <i class="fa-solid fa-eye text-sky-400 mb-2"></i>
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Visibility</p>
+                <p class="text-xl font-semibold"><span id="visibility-val">10</span><span class="text-sm font-normal text-slate-500 ml-1">km</span></p>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto custom-scroll p-6 space-y-8">
-            
-            <section class="grid grid-cols-2 gap-3">
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-4 flex items-center gap-4">
-                    <img id="w-icon" src="" class="w-12 h-12">
-                    <div>
-                        <p id="w-temp" class="text-2xl font-bold">--°C</p>
-                        <p id="w-desc" class="text-[10px] uppercase text-sky-400 font-bold">--</p>
-                    </div>
+        <div class="mt-4">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Upcoming Forecast</h3>
+            <div id="hourly-forecast" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                <div class="min-w-[85px] bg-white/5 border border-white/5 rounded-2xl p-3 text-center">
+                    <p class="text-[10px] text-slate-400">9 PM</p>
+                    <img src="https://openweathermap.org/img/wn/01n.png" class="w-8 h-8 mx-auto">
+                    <p class="font-bold">24°</p>
                 </div>
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-4 flex items-center gap-4">
-                    <i class="fa-solid fa-droplet text-sky-400 text-xl"></i>
-                    <div>
-                        <p class="text-lg font-bold"><span id="w-hum">--</span>%</p>
-                        <p class="text-[10px] uppercase text-slate-500 font-bold">Humidity</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="space-y-4">
-                <div class="bg-sky-500/10 border border-sky-500/20 rounded-2xl p-4">
-                    <h4 class="text-xs font-bold text-sky-400 uppercase mb-2"><i class="fa-solid fa-info-circle mr-1"></i> About Place</h4>
-                    <p id="place-desc" class="text-sm text-slate-300 leading-relaxed">ස්ථානය පිළිබඳ විස්තරයක් මෙහි දිස්වේ...</p>
-                </div>
-                <div class="border-l-2 border-slate-700 pl-4">
-                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Historical Background</h4>
-                    <p id="place-hist" class="text-sm text-slate-400 italic leading-relaxed">ඓතිහාසික පසුබිම...</p>
-                </div>
-            </section>
-
-            <section>
-                <h4 class="text-xs font-bold text-slate-500 uppercase mb-4">Gallery Highlights</h4>
-                <div id="gallery" class="grid grid-cols-3 gap-2"></div>
-            </section>
-
-            <section>
-                <h4 class="text-xs font-bold text-sky-400 uppercase mb-4"><i class="fa-solid fa-hotel mr-1"></i> Nearby Stays</h4>
-                <div id="hotels" class="space-y-3"></div>
-            </section>
-
-            <section class="bg-white/5 rounded-3xl p-5 border border-white/5">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-xs font-bold uppercase">User Ratings</h4>
-                    <span class="text-yellow-400 font-bold text-sm">★ 4.8</span>
-                </div>
-                <div class="flex -space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center text-[10px]">AS</div>
-                    <div class="w-8 h-8 rounded-full bg-sky-700 border-2 border-slate-900 flex items-center justify-center text-[10px]">KP</div>
-                    <div class="w-8 h-8 rounded-full bg-indigo-700 border-2 border-slate-900 flex items-center justify-center text-[10px]">+12</div>
-                </div>
-            </section>
-
+            </div>
         </div>
-    </aside>
 
-    <div id="loader" class="fixed inset-0 z-[200] bg-slate-950 flex items-center justify-center transition-opacity duration-500">
-        <div class="text-center">
-            <div class="w-12 h-12 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-[10px] font-bold tracking-[0.3em] text-sky-500">INITIALIZING SYSTEMS</p>
-        </div>
-    </div>
+    </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const W_KEY = 'a711d55b1e89708be65819eb07c0eeba';
-        let map;
-
-        // Mock Destination Data
-        const db = {
-            "Sigiriya": {
-                img: "https://images.unsplash.com/photo-1546708973-b339540b5162?q=80&w=1000",
-                desc: "සීගිරිය යනු ලොව අටවන පුදුමය ලෙස සැලකෙන ඓතිහාසික බලකොටුවකි.",
-                hist: "පස්වන සියවසේදී කාශ්‍යප රජු විසින් මෙය සිය රාජධානිය කරගත් අතර මෙහි ඇති බිතුසිතුවම් ලොව පුරා ප්‍රසිද්ධය.",
-                gallery: ["https://images.unsplash.com/photo-1588598136840-866866e9988b?w=200", "https://images.unsplash.com/photo-1620619767323-b95a89183081?w=200", "https://images.unsplash.com/photo-1546708973-b339540b5162?w=200"],
-                hotels: [{n: "Hotel Sigiriya", p: "$80", r: "4.5"}, {n: "Aliya Resort", p: "$120", r: "4.8"}]
-            },
-            "Ella": {
-                img: "https://images.unsplash.com/photo-1540611025311-01df3cef54b5?q=80&w=1000",
-                desc: "ඇල්ල යනු මීදුමෙන් වැසුණු කඳු පන්ති සහ දියඇලි වලින් පිරි සුන්දර නගරයකි.",
-                hist: "ආරුක්කු නවයේ පාලම සහ රාවණා ඇල්ල මෙහි ඇති ප්‍රධාන සංචාරක ආකර්ෂණ වේ.",
-                gallery: ["https://images.unsplash.com/photo-1540611025311-01df3cef54b5?w=200", "https://images.unsplash.com/photo-1625476100779-3f04494f1776?w=200", "https://images.unsplash.com/photo-1590050835560-8f921d234674?w=200"],
-                hotels: [{n: "9 Arch Lodge", p: "$50", r: "4.2"}, {n: "Ella Flower Garden", p: "$90", r: "4.6"}]
-            }
-        };
-
-        function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([7.8731, 80.7718], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-            // සිතියම මත ස්ථානයක් click කළ විට වැඩ කරන ආකාරය
-            map.on('click', async e => {
-                const { lat, lng } = e.latlng;
-                fetchData(lat, lng);
-            });
-
-            // Default Markers
-            L.marker([7.9570, 80.7603]).addTo(map).on('click', () => fetchData(7.9570, 80.7603, "Sigiriya"));
-            L.marker([6.8724, 81.0470]).addTo(map).on('click', () => fetchData(6.8724, 81.0470, "Ella"));
-        }
-
-        async function fetchData(lat, lon, name = null) {
-            document.getElementById('loader').style.display = 'flex';
-            document.getElementById('loader').style.opacity = '1';
-
-            try {
-                const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${W_KEY}`);
-                const data = await res.json();
-                
-                updateUI(data, name || data.name);
-                map.flyTo([lat, lon], 12);
-            } catch (e) {
-                alert("Data error!");
-            } finally {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-            }
-        }
-
-        function updateUI(w, name) {
-            const panel = document.getElementById('detail-panel');
-            panel.classList.remove('hidden');
-
-            // Weather Update
-            document.getElementById('place-title').innerText = name;
-            document.getElementById('w-temp').innerText = Math.round(w.main.temp) + "°C";
-            document.getElementById('w-desc').innerText = w.weather[0].description;
-            document.getElementById('w-hum').innerText = w.main.humidity;
-            document.getElementById('w-icon').src = `https://openweathermap.org/img/wn/${w.weather[0].icon}@2x.png`;
-            document.getElementById('place-date').innerText = new Date().toLocaleDateString('si-LK', { month: 'long', day: 'numeric', year: 'numeric' });
-
-            // Place Details Update (සොයාගත හැකි නම් පමණක්)
-            const info = db[name] || db["Sigiriya"]; // Default fallback
-            document.getElementById('hero-img').src = info.img;
-            document.getElementById('place-desc').innerText = info.desc;
-            document.getElementById('place-hist').innerText = info.hist;
-
-            // Gallery
-            document.getElementById('gallery').innerHTML = info.gallery.map(img => `<img src="${img}" class="rounded-xl w-full h-20 object-cover border border-white/10">`).join('');
-
-            // Hotels
-            document.getElementById('hotels').innerHTML = info.hotels.map(h => `
-                <div class="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5">
-                    <div>
-                        <p class="font-bold text-sm">${h.n}</p>
-                        <p class="text-[10px] text-slate-500">★ ${h.r} Rating</p>
-                    </div>
-                    <p class="text-sky-400 font-bold text-sm">${h.p}</p>
-                </div>
-            `).join('');
-
-            triggerWeatherAnim(w.weather[0].main);
-        }
-
-        function triggerWeatherAnim(type) {
-            const container = document.getElementById('weather-layer');
-            container.innerHTML = '';
-            if(type.includes('Rain')) {
-                for(let i=0; i<60; i++) {
-                    const drop = document.createElement('div');
-                    drop.className = 'rain-drop';
-                    drop.style.left = Math.random() * 100 + 'vw';
-                    drop.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
-                    container.appendChild(drop);
-                }
-            }
-        }
-
-        function closePanel() { document.getElementById('detail-panel').classList.add('hidden'); }
-
-        document.getElementById('search-form').onsubmit = async e => {
-            e.preventDefault();
-            const city = document.getElementById('search-input').value;
-            const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${W_KEY}`).then(r => r.json());
-            if(res.length > 0) fetchData(res[0].lat, res[0].lon, res[0].name);
-        };
-
-        window.onload = () => {
-            initMap();
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-            }, 1500);
-        };
+        // ඔයාගේ පරණ කේතයේ තර්කය (logic) මෙතනට එලෙසම සම්බන්ධ කරන්න.
+        // UI එක update කරන විට ඉහත දී ඇති ID භාවිතා කරන්න.
     </script>
 </body>
 </html>
