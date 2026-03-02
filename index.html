@@ -162,7 +162,13 @@
        
         /* Forecast Carousel */
         .forecast-item {
-            min-width: 100px;
+            min-width: 120px; /* Increased for better text visibility */
+            flex-shrink: 0;
+        }
+        .forecast-desc {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -174,7 +180,7 @@
     <!-- Full-screen Leaflet Map -->
     <div id="map" class="fixed inset-0 z-0"></div>
    
-    <!-- Weather Animations Container (pointer-events-none මෙය නිසා map එක click කරන්න පුළුවන්) -->
+    <!-- Weather Animations Container -->
     <div id="animations-layer" class="fixed inset-0 z-[5] pointer-events-none"></div>
    
     <!-- Rain Container -->
@@ -227,7 +233,7 @@
         </div>
     </header>
    
-    <!-- Glassmorphism Weather Card (Mobile එකේත් පහතටම responsive වෙනවා) -->
+    <!-- Glassmorphism Weather Card -->
     <div id="weather-card"
          class="glass fixed top-28 left-6 md:left-8 w-full max-w-[380px] rounded-3xl p-8 z-50 weather-card opacity-0 overflow-y-auto max-h-[80vh]">
        
@@ -303,13 +309,17 @@
         <!-- Hourly Forecast -->
         <div class="mt-10">
             <h3 class="text-lg font-semibold mb-4">Hourly Forecast</h3>
-            <div id="hourly-forecast" class="flex overflow-x-auto gap-4 pb-4"></div>
+            <div id="hourly-forecast" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+                <!-- Items will be added here -->
+            </div>
         </div>
        
         <!-- 5-Day Forecast -->
         <div class="mt-10">
             <h3 class="text-lg font-semibold mb-4">5-Day Forecast</h3>
-            <div id="daily-forecast" class="flex overflow-x-auto gap-4 pb-4"></div>
+            <div id="daily-forecast" class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
+                <!-- Items will be added here -->
+            </div>
         </div>
        
         <div class="mt-10 text-center text-[10px] text-white/40 border-t border-white/10 pt-6">
@@ -591,7 +601,7 @@
                     <div class="text-sm text-white/70">${formatTime(item.dt)}</div>
                     <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="icon" class="w-10 mx-auto">
                     <div class="text-xl">${Math.round(item.main.temp)}°C</div>
-                    <div class="text-xs text-white/50 capitalize">${item.weather[0].description}</div>
+                    <div class="text-xs text-white/50 capitalize forecast-desc">${item.weather[0].description}</div>
                 `;
                 hourlyContainer.appendChild(div);
             }
@@ -618,7 +628,7 @@
                     <div class="text-sm text-white/70">${day.date}</div>
                     <img src="https://openweathermap.org/img/wn/${day.icon}.png" alt="icon" class="w-10 mx-auto">
                     <div class="text-xl">${day.temp}°C</div>
-                    <div class="text-xs text-white/50 capitalize">${day.desc}</div>
+                    <div class="text-xs text-white/50 capitalize forecast-desc">${day.desc}</div>
                 `;
                 dailyContainer.appendChild(div);
             });
